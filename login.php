@@ -34,10 +34,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 header('Location: customer.php');
             } elseif ($role === 'Investor') {
                 header('Location: investor.php');
-            }elseif ($role === 'Supplier') {
+            } elseif ($role === 'Supplier') {
                 header('Location: supplier.php');
-            }
-            elseif ($role === 'Labour') {
+            } elseif ($role === 'Labour') {
                 header('Location: labour.php');
             } else {
                 echo "Invalid role selected.";
@@ -58,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - AgriBuzz</title>
+    <title>Login - SmartAgri</title>
     <style>
     body {
         font-family: Arial, sans-serif;
@@ -114,6 +113,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     .register-link a:hover {
         text-decoration: underline;
     }
+    .back-link {
+        text-align: center;
+        margin-top: 20px;
+    }
+    .back-link a {
+        color: #5cb85c;
+        text-decoration: none;
+    }
+    .back-link a:hover {
+        text-decoration: underline;
+    }
 </style>
 </head>
 <body>
@@ -141,6 +151,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     <div class="register-link">
         <p>Don't have an account? <a href="register.php">Register here</a></p>
+    </div>
+    
+    <!-- Back to Dashboard Link -->
+    <div class="back-link">
+        <p><a href="dashboard.php">Back to Dashboard</a></p>
     </div>
 </div>
 
