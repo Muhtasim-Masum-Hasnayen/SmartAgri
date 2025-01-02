@@ -65,7 +65,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $price = $_POST['price'];
     $quantity = $_POST['quantity'];
 
-    $sql = "INSERT INTO Products (supplier_id, product_name, product_type, description, price, quantity)
+    $sql = "INSERT INTO Products (supplier_id, product_name, product_type, description, price, quantity) 
             VALUES ('$supplier_id', '$product_name', '$product_type', '$description', '$price', '$quantity')";
 
     if ($conn->query($sql) === TRUE) {
@@ -87,7 +87,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <form method="POST" action="">
         Supplier ID: <input type="number" name="supplier_id" required><br><br>
         Product Name: <input type="text" name="product_name" required><br><br>
-        Product Type:
+        Product Type: 
         <select name="product_type" required>
             <option value="Fertilizer">Fertilizer</option>
             <option value="Machine">Machine</option>
