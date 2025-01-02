@@ -34,7 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 header('Location: customer.php');
             } elseif ($role === 'Investor') {
                 header('Location: investor.php');
-            }elseif ($role === 'supplier') {
+            }elseif ($role === 'Supplier') {
                 header('Location: supplier.php');
             }
             elseif ($role === 'Labour') {
