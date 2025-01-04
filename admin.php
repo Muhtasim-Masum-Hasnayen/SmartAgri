@@ -7,6 +7,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Admin') {
     header("Location: login.php"); // Redirect to login page if not authenticated
     exit();
 }
+
 // Initialize messages
 $error = '';
 $success_message = '';
@@ -21,10 +22,80 @@ $products_result = $conn->query("SELECT * FROM products");
 $supplies_result = $conn->query("SELECT s.*, u.name AS supplier_name FROM supplies s JOIN users u ON s.supplier_id = u.user_id");
 
 // Fetch all orders
-$orders_result = $conn->query("SELECT o.*, p.name AS product_name, u.name AS customer_name 
-                               FROM orders o 
+$orders_result = $conn->query("SELECT o.*, p.name AS product_name, u.name AS customer_name
+                               FROM orders o
                                JOIN products p ON o.product_id = p.id
                                JOIN users u ON o.customer_id = u.user_id");
+
+// Handle product addition
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_product'])) {
+    $product_name = htmlspecialchars($_POST['product_name']);
+    $product_price = htmlspecialchars($_POST['product_price']);
+
+    // Handle image upload
+    if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
+        $image_tmp = $_FILES['product_image']['tmp_name'];
+        $image_name = basename($_FILES['product_image']['name']);
+        $image_path = 'uploads/' . $image_name; // Path where the image will be stored
+
+        // Move the uploaded image to the desired location
+        move_uploaded_file($image_tmp, $image_path);
+
+        // Insert the product into the database
+        $sql = "INSERT INTO products (name, price, image) VALUES (?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("sss", $product_name, $product_price, $image_path);
+        $stmt->execute();
+
+        // Redirect or display a success message
+        header('Location: admin.php'); // Redirect to refresh the page and show the new product
+        exit();
+    } else {
+        $error = "Error uploading image.";
+    }
+}
+
+// Handle product deletion
+if (isset($_GET['delete_product']) && is_numeric($_GET['delete_product'])) {
+    $product_id = $_GET['delete_product'];
+
+    // Prepare the DELETE query
+    $sql = "DELETE FROM products WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $product_id);
+
+    // Execute the query
+    if ($stmt->execute()) {
+        // Redirect with success message
+        header('Location: admin.php?success=Product deleted successfully.');
+        exit();
+    } else {
+        // Redirect with error message
+        header('Location: admin.php?error=Failed to delete product.');
+        exit();
+    }
+}
+
+// Handle user deletion
+if (isset($_GET['delete_user']) && is_numeric($_GET['delete_user'])) {
+    $user_id = $_GET['delete_user'];
+
+    // Prepare the DELETE query
+    $sql = "DELETE FROM users WHERE user_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $user_id);
+
+    // Execute the query
+    if ($stmt->execute()) {
+        // Redirect with success message
+        header('Location: admin.php?success=User deleted successfully.');
+        exit();
+    } else {
+        // Redirect with error message
+        header('Location: admin.php?error=Failed to delete user.');
+        exit();
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -118,6 +189,13 @@ $orders_result = $conn->query("SELECT o.*, p.name AS product_name, u.name AS cus
     </header>
 
     <div class="container">
+        <!-- Display Success/Error Messages -->
+        <?php if (isset($_GET['success'])): ?>
+            <p class="success"><?= htmlspecialchars($_GET['success']); ?></p>
+        <?php elseif (isset($_GET['error'])): ?>
+            <p class="error"><?= htmlspecialchars($_GET['error']); ?></p>
+        <?php endif; ?>
+
         <!-- Manage Users -->
         <div class="section">
             <h2>Manage Users</h2>
@@ -139,8 +217,8 @@ $orders_result = $conn->query("SELECT o.*, p.name AS product_name, u.name AS cus
                             <td><?= htmlspecialchars($user['email']); ?></td>
                             <td><?= htmlspecialchars($user['role']); ?></td>
                             <td>
-                                <a href="edit_user.php?id=<?= $user['user_id']; ?>" class="button">Edit</a>
-                                <a href="delete_user.php?id=<?= $user['user_id']; ?>" class="button" style="background: #d9534f;">Delete</a>
+                                <!-- Delete User -->
+                                <a href="admin.php?delete_user=<?= $user['user_id']; ?>" class="button" style="background: #d9534f;">Delete</a>
                             </td>
                         </tr>
                     <?php endwhile; ?>
@@ -165,72 +243,158 @@ $orders_result = $conn->query("SELECT o.*, p.name AS product_name, u.name AS cus
                         <tr>
                             <td><?= htmlspecialchars($product['id']); ?></td>
                             <td><?= htmlspecialchars($product['name']); ?></td>
-                            <td>₹<?= htmlspecialchars($product['price']); ?></td>
+                            <td>Tk. <?= htmlspecialchars($product['price']); ?></td>
                             <td>
-                                <a href="edit_product.php?id=<?= $product['id']; ?>" class="button">Edit</a>
-                                <a href="delete_product.php?id=<?= $product['id']; ?>" class="button" style="background: #d9534f;">Delete</a>
+                                <!-- Edit Product -->
+                                <a href="admin.php?edit_product=<?= $product['id']; ?>" class="button">Edit</a>
+                                <!-- Delete Product -->
+                                <a href="admin.php?delete_product=<?= $product['id']; ?>" class="button" style="background: #d9534f;">Delete</a>
                             </td>
                         </tr>
                     <?php endwhile; ?>
                 </tbody>
             </table>
+
+
+           <?php
+           // Handle product addition
+           if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_product'])) {
+               $product_name = htmlspecialchars($_POST['product_name']);
+               $product_price = htmlspecialchars($_POST['product_price']);
+               $image_path = ''; // Initialize as empty
+
+               // Check if the image was uploaded
+               if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
+                   $image_tmp = $_FILES['product_image']['tmp_name'];
+                   $image_name = basename($_FILES['product_image']['name']); // Extract just the file name
+                   $image_path = $image_name; // Save only the file name in the database
+
+                   // Ensure the 'uploads/' directory exists
+                   if (!is_dir('uploads')) {
+                       mkdir('uploads', 0777, true);
+                   }
+
+                   // Move the uploaded file to the 'uploads/' directory
+                   if (move_uploaded_file($image_tmp, 'uploads/' . $image_name)) {
+                       // Insert the product into the database with the image name only
+                       $sql = "INSERT INTO products (name, price, image) VALUES (?, ?, ?)";
+                       $stmt = $conn->prepare($sql);
+                       $stmt->bind_param("sss", $product_name, $product_price, $image_path);
+                       $stmt->execute();
+
+                       // Redirect to refresh the page and show the new product list
+                       header('Location: admin.php');
+                       exit();
+                   } else {
+                       $error = "Error uploading the image to the server.";
+                   }
+               } else {
+                   $error = "Please upload a valid image.";
+               }
+           }
+           ?>
+
+
+
+
+
+
+
+            <!-- Add Product Form -->
+            <form method="POST" enctype="multipart/form-data" style="margin-top: 20px;">
+                <h3>Add New Product</h3>
+                <?php if (isset($error)): ?>
+                    <p class="error"><?= $error; ?></p>
+                <?php endif; ?>
+                <label for="product_name">Name:</label>
+                <input type="text" id="product_name" name="product_name" required>
+
+                <label for="product_price">Price:</label>
+                <input type="number" id="product_price" name="product_price" required>
+
+                <label for="product_image">Upload Picture (optional)</label>
+                <input type="file" id="product_image" name="product_image" accept="image/*">
+                <button type="submit" name="add_product" class="button">Add Product</button>
+            </form>
+
+
         </div>
 
-        <!-- Manage Supplies -->
-        <div class="section">
-            <h2>Manage Supplies</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Supply ID</th>
-                        <th>Supplier</th>
-                        <th>Supply Name</th>
-                        <th>Quantity</th>
-                        <th>Price</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($supply = $supplies_result->fetch_assoc()): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($supply['supply_id']); ?></td>
-                            <td><?= htmlspecialchars($supply['supplier_name']); ?></td>
-                            <td><?= htmlspecialchars($supply['supply_name']); ?></td>
-                            <td><?= htmlspecialchars($supply['quantity']); ?></td>
-                            <td>₹<?= htmlspecialchars($supply['price']); ?></td>
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
+        <?php
+        // Handle product edit
+        // Handle product edit
+        if (isset($_GET['edit_product'])) {
+            $product_id = $_GET['edit_product'];
 
-        <!-- Manage Orders -->
-        <div class="section">
-            <h2>Manage Orders</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Order ID</th>
-                        <th>Product</th>
-                        <th>Customer</th>
-                        <th>Quantity</th>
-                        <th>Order Date</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($order = $orders_result->fetch_assoc()): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($order['order_id']); ?></td>
-                            <td><?= htmlspecialchars($order['product_name']); ?></td>
-                            <td><?= htmlspecialchars($order['customer_name']); ?></td>
-                            <td><?= htmlspecialchars($order['quantity']); ?></td>
-                            <td><?= htmlspecialchars($order['order_date']); ?></td>
-                            <td><?= htmlspecialchars($order['status']); ?></td>
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
+            // Fetch the product details for the edit form
+            $result = $conn->query("SELECT * FROM products WHERE id = $product_id");
+            $product = $result->fetch_assoc();
+
+            if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_product'])) {
+                $product_name = htmlspecialchars($_POST['product_name']);
+                $product_price = htmlspecialchars($_POST['product_price']);
+                $image_path = $product['image']; // Keep the current image by default
+
+                // Check if the image was uploaded
+                if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
+                    $image_tmp = $_FILES['product_image']['tmp_name'];
+                    $image_name = basename($_FILES['product_image']['name']); // Just the file name, not full path
+                    $image_path = $image_name; // Store only the image name
+
+                    // Move the uploaded image to the desired location in the 'uploads/' directory
+                    if (move_uploaded_file($image_tmp, 'uploads/' . $image_path)) {
+                        // Update the product details in the database
+                        $sql = "UPDATE products SET name = ?, price = ?, image = ? WHERE id = ?";
+                        $stmt = $conn->prepare($sql);
+                        $stmt->bind_param("sssi", $product_name, $product_price, $image_path, $product_id);
+                        $stmt->execute();
+
+                        // Redirect to refresh the page and show the updated product list
+                        header('Location: admin.php');
+                        exit();
+                    } else {
+                        $error = "Error uploading image.";
+                    }
+                } else {
+                    // If no image uploaded, update product without changing the image
+                    $sql = "UPDATE products SET name = ?, price = ? WHERE id = ?";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("ssi", $product_name, $product_price, $product_id);
+                    $stmt->execute();
+
+                    // Redirect to refresh the page and show the updated product list
+                    header('Location: admin.php');
+                    exit();
+                }
+            }
+        }
+
+        ?>
+
+        <!-- Edit Product Form -->
+        <?php if (isset($_GET['edit_product'])): ?>
+            <div class="section">
+                <h2>Edit Product</h2>
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="product_id" value="<?= $product['id']; ?>">
+
+                    <label for="product_name">Product Name</label>
+                    <input type="text" id="product_name" name="product_name" value="<?= htmlspecialchars($product['name']); ?>" required>
+
+                    <label for="product_price">Price</label>
+                    <input type="number" id="product_price" name="product_price" value="<?= htmlspecialchars($product['price']); ?>" required>
+
+                    <label for="product_image">Upload Picture (optional)</label>
+                    <input type="file" id="product_image" name="product_image" accept="image/*">
+
+                    <button type="submit" name="update_product" class="button">Update Product</button>
+                    <a href="admin.php" class="button" style="background: #f0ad4e;">Cancel</a>
+                </form>
+            </div>
+        <?php endif; ?>
+
+
+
     </div>
 </body>
 </html>
