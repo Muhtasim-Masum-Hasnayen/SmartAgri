@@ -1,80 +1,103 @@
+<?php
+session_start();
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Farmer Dashboard - SmartAgri</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            display: flex;
-            flex-direction: column;
-            background-color: #f4f4f4;
         }
+
         header {
             background-color: #4CAF50;
             color: white;
-            padding: 10px;
+            padding: 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .header-nav a {
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
-            margin: 0 5px;
-            border-radius: 4px;
-        }
-        .header-nav a:hover {
-            background-color: #45a049;
-        }
+
         .sidebar {
-            width: 20%;
-            background-color: #4CAF50;
-            color: white;
-            height: 100vh;
+            width: 250px;
+            background-color: #f4f4f4;
             padding: 20px;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            height: calc(100vh - 70px);
         }
+
+        .sidebar h2 {
+            margin-bottom: 20px;
+        }
+
         .sidebar a {
-            color: white;
-            text-decoration: none;
             display: block;
-            padding: 10px 15px;
-            margin: 5px 0;
-            border-radius: 4px;
+            padding: 10px;
+            color: #333;
+            text-decoration: none;
+            margin-bottom: 5px;
         }
+
         .sidebar a:hover {
-            background-color: #45a049;
+            background-color: #ddd;
         }
+
         .main-content {
             flex: 1;
             padding: 20px;
-            width: 80%;
+            background-color: #fff;
         }
+
         .content-container {
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 1200px;
+            margin: 0 auto;
         }
     </style>
+
+    <!-- Add this script in the head -->
+    <script>
+        // Define selectCrop in the window object to make it globally available
+        window.selectCrop = function(productId, cropName) {
+            console.log('SelectCrop called:', productId, cropName); // Debug line
+            const productIdElement = document.getElementById('product_id');
+            const selectedCropElement = document.getElementById('selected-crop');
+            
+            if (productIdElement && selectedCropElement) {
+                productIdElement.value = productId;
+                selectedCropElement.textContent = cropName;
+            }
+        }
+
+        // Error handling
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            console.log('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo + '\nColumn: ' + columnNo + '\nError: ' + error);
+            return false;
+        };
+    </script>
 </head>
 <body>
     <header>
-        <div>SmartAgri</div>
-        <nav class="header-nav">
-            <a href="#" onclick="loadContent('farmer/farmers_market.php')">Farmer's Market</a>
-            <a href="logout.php">Logout</a>
-        </nav>
+        <h1>Farmer Dashboard</h1>
+        <div>
+            <span>Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?></span>
+            <a href="logout.php" class="btn btn-danger ms-3">Logout</a>
+        </div>
     </header>
+
     <div style="display: flex;">
         <div class="sidebar">
             <h2>Navigation</h2>
-            <a href="#" onclick="loadContent('crop_management.php')">Crop/Product Management</a> 
+            <a href="#" onclick="loadContent('crop_management.php')">Crop/Product Management</a>
             <a href="#" onclick="loadContent('farmer/order_management.php')">Order Management</a>
             <a href="#" onclick="loadContent('farmer/inventory_management.php')">Inventory Management</a>
             <a href="#" onclick="loadContent('farmer/labor_hiring.php')">Labor Hiring</a>
@@ -90,18 +113,37 @@
         </div>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
-        // Dynamic content loader
+        // Modified loadContent function
         function loadContent(page) {
             const contentContainer = document.getElementById('dynamicContent');
             fetch(page)
                 .then(response => response.text())
                 .then(html => {
                     contentContainer.innerHTML = html;
+                    // Re-attach event handlers if needed
+                    attachEventHandlers();
                 })
                 .catch(err => {
                     contentContainer.innerHTML = '<p>Error loading page.</p>';
+                    console.error('Error loading content:', err);
                 });
+        }
+
+        // Function to attach event handlers after dynamic content is loaded
+        function attachEventHandlers() {
+            // Add event listeners to all select buttons
+            document.querySelectorAll('.select-crop-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const productId = this.getAttribute('data-product-id');
+                    const cropName = this.getAttribute('data-crop-name');
+                    window.selectCrop(productId, cropName);
+                });
+            });
+            console.log('Content loaded and handlers attached');
         }
     </script>
 </body>
