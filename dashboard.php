@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgriBuzz - Farming Management System</title>
+    <title>SmartAgri - Farming Management System</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -81,15 +81,14 @@
 </head>
 <body>
     <header>
-        <h1>Agricultural Management System</h1>
+        <h1>AgriSmart : Agricultural Management System</h1>
         <p>Efficient Farming, Better Management!</p>
     </header>
     <nav>
-        <a href="#">Home</a>
-        <a href="farmerMarket.php">Farmers Market</a>
-        <a href="#">Blog</a>
+        <a href="dashboard.php">Home</a>
+        <a href="blog.php">Blog</a>
         <a href="login.php">Login</a>
-        <a href="#">Contact</a>
+        <a href="contact.php">Contact</a>
     </nav>
     <div class="hero">
 
@@ -99,7 +98,7 @@
         <p>Log in to access your personalized dashboard and manage your account effectively.</p>
     </div>
     <footer>
-        <p>&copy; 2024 Agricultural Management System. All rights reserved.</p>
+        <p>&copy; 2025 Agricultural Management System. All rights reserved.</p>
     </footer>
 </body>
 </html>

@@ -1,41 +1,98 @@
 <?php
-include('database.php'); // Include database connection
+include('database.php');
 session_start();
 
-$farmer_id = $_SESSION['user_id'];
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit();
+}
 
-// Handle Adding Product for Sale
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_product'])) {
-    $product_id = $_POST['product_id'];
-    $description = $_POST['description'];
-    $price = $_POST['price'];
-    $quantity = $_POST['quantity'];
-    $photo_path = '';
+// Initialize messages array
+$messages = [];
 
-    // Handle photo upload
-    if (!empty($_FILES['photo']['name'])) {
-        $target_dir = "uploads/";
-        $target_file = $target_dir . basename($_FILES['photo']['name']);
-        if (move_uploaded_file($_FILES['photo']['tmp_name'], $target_file)) {
-            $photo_path = $target_file;
-        }
-    }
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-    // Insert into farmer_products
-    $sql = "INSERT INTO farmer_products (farmer_id, product_id, description, price, quantity, photo_path)
-            VALUES (?, ?, ?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("iisdis", $farmer_id, $product_id, $description, $price, $quantity, $photo_path);
-    if ($stmt->execute()) {
-        $message = "Product added successfully!";
+// Check database connection
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+
+// Handle form submission
+if (isset($_POST['add_product'])) {
+    // Validate required fields
+    if (empty($_POST['product_id'])) {
+        $messages[] = ["type" => "danger", "text" => "Please select a crop first."];
+    } elseif (empty($_POST['description'])) {
+        $messages[] = ["type" => "danger", "text" => "Please provide a description."];
+    } elseif (empty($_POST['price'])) {
+        $messages[] = ["type" => "danger", "text" => "Please provide a price."];
+    } elseif (empty($_POST['quantity'])) {
+        $messages[] = ["type" => "danger", "text" => "Please provide a quantity."];
     } else {
-        $error = "Error adding product.";
+        $product_id = $_POST['product_id'];
+        $farmer_id = $_SESSION['user_id'];
+        $description = $_POST['description'];
+        $price = $_POST['price'];
+        $quantity = $_POST['quantity'];
+        
+        // Handle file upload
+        $image_path = '';
+        if (isset($_FILES['photo']) && $_FILES['photo']['error'] == 0) {
+            $target_dir = "uploads/";
+            if (!file_exists($target_dir)) {
+                mkdir($target_dir, 0777, true);
+            }
+            
+            $file_extension = strtolower(pathinfo($_FILES["photo"]["name"], PATHINFO_EXTENSION));
+            $new_filename = uniqid() . '.' . $file_extension;
+            $target_file = $target_dir . $new_filename;
+            
+            // Check if image file is a actual image or fake image
+            $check = getimagesize($_FILES["photo"]["tmp_name"]);
+            if ($check !== false) {
+                if (move_uploaded_file($_FILES["photo"]["tmp_name"], $target_file)) {
+                    $image_path = $target_file;
+                } else {
+                    $messages[] = ["type" => "danger", "text" => "Failed to upload image."];
+                }
+            } else {
+                $messages[] = ["type" => "danger", "text" => "File is not an image."];
+            }
+        }
+        
+        try {
+            // Insert into farmer_crops table
+            $stmt = $conn->prepare("INSERT INTO farmer_crops (farmer_id, product_id, description, price, quantity, image, status) VALUES (?, ?, ?, ?, ?, ?, 'available')");
+            if (!$stmt) {
+                throw new Exception("Prepare failed: " . $conn->error);
+            }
+            
+            $stmt->bind_param("iisdis", $farmer_id, $product_id, $description, $price, $quantity, $image_path);
+            
+            if ($stmt->execute()) {
+                $_SESSION['success_message'] = "Crop added successfully!";
+                header("Location: farmer.php");
+                exit();
+            } else {
+                throw new Exception("Execute failed: " . $stmt->error);
+            }
+            
+            $stmt->close();
+        } catch (Exception $e) {
+            $messages[] = ["type" => "danger", "text" => "Error: " . $e->getMessage()];
+            error_log("Database error: " . $e->getMessage());
+        }
     }
 }
 
-// Fetch All Products from the products table
-$sql = "SELECT * FROM products";
-$all_products = $conn->query($sql);
+// Display success message from session if it exists
+if (isset($_SESSION['success_message'])) {
+    $messages[] = ["type" => "success", "text" => $_SESSION['success_message']];
+    unset($_SESSION['success_message']);
+}
 ?>
 
 <!DOCTYPE html>
@@ -44,142 +101,207 @@ $all_products = $conn->query($sql);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crop Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        /* General Styles */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
+        .input-group {
+            max-width: 500px;
+            margin: 0 auto;
         }
-        .container {
-            padding: 20px;
-        }
-        .search-box {
-            margin-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #4CAF50;
-            color: white;
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            display: none;
+            margin-top: 10px;
         }
         .form-container {
             background: #fff;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        img {
-            max-width: 100px;
-            max-height: 100px;
+            margin-top: 20px;
         }
     </style>
-    <script>
-        // JavaScript for Searching Crops
-        function searchCrop() {
-            const searchInput = document.getElementById('crop-search').value.toLowerCase();
-            const rows = document.querySelectorAll('#product-table tbody tr');
-            
-            rows.forEach(row => {
-                const cropName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-                if (cropName.includes(searchInput)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        function selectCrop(productId, cropName) {
-            document.getElementById('product_id').value = productId;
-            document.getElementById('selected-crop').textContent = cropName;
-        }
-    </script>
 </head>
 <body>
-    <div class="container">
-        <h1>Crop Management</h1>
+    <div class="container py-4">
+        <h1 class="mb-4">Crop Management</h1>
+
+        <?php foreach ($messages as $message): ?>
+            <div class="alert alert-<?php echo $message['type']; ?> alert-dismissible fade show" role="alert">
+                <?php echo $message['text']; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endforeach; ?>
 
         <!-- Search Box -->
-        <div class="search-box">
-            <label for="crop-search">Search Crop:</label>
-            <input type="text" id="crop-search" onkeyup="searchCrop()" placeholder="Enter crop name">
+        <div class="mb-4">
+            <form method="GET" action="">
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Search crops..." 
+                           value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+            </form>
         </div>
 
-        <!-- Existing Products Table -->
-        <table id="product-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Crop Name</th>
-                    <th>Photo</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while ($product = $all_products->fetch_assoc()): ?>
+        <!-- Products Table -->
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="table-dark">
                     <tr>
-                        <td><?= $product['id']; ?></td> <!-- product id -->
-                        <td><?= htmlspecialchars($product['name']); ?></td> <!-- product name -->
-                        <td>
-                            <?php if (!empty($product['image'])): ?>
-                                <img src="<?= htmlspecialchars($product['image']); ?>" alt="<?= htmlspecialchars($product['name']); ?>">
-                            <?php else: ?>
-                                No Photo
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <button onclick="selectCrop(<?= $product['id']; ?>, '<?= htmlspecialchars($product['name']); ?>')">Select</button>
-                        </td>
+                        <th>ID</th>
+                        <th>Crop Name</th>
+                        <th>Photo</th>
+                        <th>Action</th>
                     </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <?php
+                    try {
+                        if (isset($_GET['search']) && !empty($_GET['search'])) {
+                            $search = '%' . $_GET['search'] . '%';
+                            $stmt = $conn->prepare("SELECT id, name, image FROM products WHERE name LIKE ?");
+                            $stmt->bind_param("s", $search);
+                        } else {
+                            $stmt = $conn->prepare("SELECT id, name, image FROM products");
+                        }
+
+                        $stmt->execute();
+                        $result = $stmt->get_result();
+
+                        if ($result->num_rows > 0) {
+                            while ($product = $result->fetch_assoc()) {
+                                ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($product['id']); ?></td>
+                                    <td><?php echo htmlspecialchars($product['name']); ?></td>
+                                    <td>
+                                        <?php if (!empty($product['image'])): ?>
+                                            <img src="<?php echo htmlspecialchars($product['image']); ?>" 
+                                                 alt="<?php echo htmlspecialchars($product['name']); ?>"
+                                                 class="img-thumbnail" style="max-width: 100px;">
+                                        <?php else: ?>
+                                            No Photo
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm select-crop-btn" 
+                                                data-product-id="<?php echo $product['id']; ?>"
+                                                data-crop-name="<?php echo htmlspecialchars($product['name'], ENT_QUOTES); ?>">
+                                            Select
+                                        </button>
+                                    </td>
+                                </tr>
+                                <?php
+                            }
+                        } else {
+                            echo '<tr><td colspan="4" class="text-center">No crops found</td></tr>';
+                        }
+                        
+                        $stmt->close();
+                    } catch (Exception $e) {
+                        echo '<tr><td colspan="4" class="text-center">Error: ' . htmlspecialchars($e->getMessage()) . '</td></tr>';
+                    }
+                    ?>
+                </tbody>
+            </table>
+        </div>
 
         <!-- Add Product Form -->
-        <div class="form-container">
-            <h2>Add Crop for Sale</h2>
+        <div class="form-container mt-4">
+            <h2>Add Product for Sale</h2>
             <p><strong>Selected Crop:</strong> <span id="selected-crop">None</span></p>
-            <form method="POST" enctype="multipart/form-data">
+            
+            <form method="POST" action="" enctype="multipart/form-data" id="product-form" class="needs-validation" novalidate>
                 <input type="hidden" name="product_id" id="product_id" value="">
+                
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description:</label>
+                    <textarea name="description" id="description" class="form-control" required></textarea>
+                    <div class="invalid-feedback">Please provide a description.</div>
+                </div>
 
-                <label for="description">Description:</label>
-                <textarea name="description" required></textarea>
+                <div class="mb-3">
+                    <label for="price" class="form-label">Price:</label>
+                    <input type="number" name="price" id="price" class="form-control" step="0.01" min="0" required>
+                    <div class="invalid-feedback">Please provide a valid price.</div>
+                </div>
 
-                <label for="price">Price:</label>
-                <input type="number" name="price" step="0.01" required>
+                <div class="mb-3">
+                    <label for="quantity" class="form-label">Quantity (in kg):</label>
+                    <input type="number" name="quantity" id="quantity" class="form-control" min="1" required>
+                    <div class="invalid-feedback">Please provide a valid quantity.</div>
+                </div>
 
-                <label for="quantity">Quantity (in kg):</label>
-                <input type="number" name="quantity" required>
+                <div class="mb-3">
+                    <label for="photo" class="form-label">Photo:</label>
+                    <input type="file" name="photo" id="photo" class="form-control" accept="image/*">
+                    <img id="preview" class="preview-image">
+                </div>
 
-                <label for="photo">Photo:</label>
-                <input type="file" name="photo">
-
-                <button type="submit" name="add_product">Add Product</button>
+                <button type="submit" name="add_product" class="btn btn-primary">Add Product</button>
             </form>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Attach select button listeners
+        document.querySelectorAll('.select-crop-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                const cropName = this.getAttribute('data-crop-name');
+                
+                // Update the selected crop display
+                document.getElementById('product_id').value = productId;
+                document.getElementById('selected-crop').textContent = cropName;
+                
+                // Scroll to the form
+                document.querySelector('.form-container').scrollIntoView({ 
+                    behavior: 'smooth' 
+                });
+            });
+        });
+
+        // Image preview
+        document.getElementById('photo').addEventListener('change', function(e) {
+            const preview = document.getElementById('preview');
+            const file = e.target.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Form validation
+        const form = document.getElementById('product-form');
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            // Check if a crop is selected
+            const productId = document.getElementById('product_id').value;
+            if (!productId) {
+                event.preventDefault();
+                alert('Please select a crop first!');
+                return false;
+            }
+            
+            form.classList.add('was-validated');
+        });
+    });
+    </script>
 </body>
 </html>

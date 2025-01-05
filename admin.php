@@ -27,6 +27,8 @@ $orders_result = $conn->query("SELECT o.*, p.name AS product_name, u.name AS cus
                                JOIN products p ON o.product_id = p.id
                                JOIN users u ON o.customer_id = u.user_id");
 
+
+
 // Handle product addition
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_product'])) {
     $product_name = htmlspecialchars($_POST['product_name']);
@@ -196,6 +198,8 @@ if (isset($_GET['delete_user']) && is_numeric($_GET['delete_user'])) {
             <p class="error"><?= htmlspecialchars($_GET['error']); ?></p>
         <?php endif; ?>
 
+
+
         <!-- Manage Users -->
         <div class="section">
             <h2>Manage Users</h2>
@@ -233,6 +237,7 @@ if (isset($_GET['delete_user']) && is_numeric($_GET['delete_user'])) {
                 <thead>
                     <tr>
                         <th>Product ID</th>
+                        <th>Image</th>
                         <th>Name</th>
                         <th>Price</th>
                         <th>Actions</th>
@@ -242,6 +247,10 @@ if (isset($_GET['delete_user']) && is_numeric($_GET['delete_user'])) {
                     <?php while ($product = $products_result->fetch_assoc()): ?>
                         <tr>
                             <td><?= htmlspecialchars($product['id']); ?></td>
+                            <td>
+                                                    <!-- Display Product Image -->
+                                                    <img src="uploads/<?= htmlspecialchars($product['image']); ?>" alt="<?= htmlspecialchars($product['name']); ?>" width="100" height="100">
+                                                </td>
                             <td><?= htmlspecialchars($product['name']); ?></td>
                             <td>Tk. <?= htmlspecialchars($product['price']); ?></td>
                             <td>
@@ -392,6 +401,62 @@ if (isset($_GET['delete_user']) && is_numeric($_GET['delete_user'])) {
                 </form>
             </div>
         <?php endif; ?>
+
+                    <!-- Supplies Section -->
+                    <section>
+                        <h2>Manage Supplies</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Supply ID</th>
+                                    <th>Product ID</th>
+                                    <th>Supplier</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php while ($supply = $supplies_result->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?= $supply['supply_id'] ?></td>
+                                    <td><?= $supply['product_id'] ?></td>
+                                    <td><?= $supply['supplier_name'] ?></td>
+                                    <td><?= $supply['quantity'] ?></td>
+                                    <td>$<?= number_format($supply['price'], 2) ?></td>
+                                </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </section>
+
+                    <!-- Orders Section -->
+                    <section>
+                        <h2>Manage Orders</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Total Price</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php while ($order = $orders_result->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?= $order['order_id'] ?></td>
+                                    <td><?= $order['customer_name'] ?></td>
+                                    <td><?= $order['product_name'] ?></td>
+                                    <td><?= $order['quantity'] ?></td>
+                                    <td>$<?= number_format($order['total_price'], 2) ?></td>
+                                    <td><?= $order['status'] ?></td>
+                                </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </section>
 
 
 

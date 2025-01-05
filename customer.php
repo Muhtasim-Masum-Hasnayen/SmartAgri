@@ -2,10 +2,43 @@
 session_start();
 include 'database.php'; // Include the database connection
 
+
 try {
     // Check if the user is logged in and has the role 'Customer'
     if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Customer') {
         throw new Exception("Unauthorized access. Please log in as a Customer.");
+    }
+
+    // Initialize the cart in the session if not already set
+    if (!isset($_SESSION['cart'])) {
+        $_SESSION['cart'] = [];
+    }
+
+    // Handle adding items to the cart
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
+        $productId = $_POST['product_id'];
+
+        // Fetch product details
+        $stmt = $conn->prepare("SELECT * FROM products WHERE id = ?");
+        $stmt->bind_param("i", $productId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            $product = $result->fetch_assoc();
+            // Add product to the cart
+            $_SESSION['cart'][$productId] = [
+                'id' => $product['id'],
+                'name' => $product['name'],
+                'price' => $product['price']
+            ];
+        }
+    }
+
+    // Handle removing items from the cart
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_from_cart'])) {
+        $productId = $_POST['product_id'];
+        unset($_SESSION['cart'][$productId]);
     }
 
     // Fetch products from the database
@@ -16,7 +49,7 @@ try {
         throw new Exception("Error fetching products: " . $conn->error);
     }
 } catch (Exception $e) {
-    // Log the error and redirect to an error page or show a friendly error message
+    // Log the error and display a friendly message
     error_log($e->getMessage());
     echo "<p style='color: red; text-align: center;'>An error occurred: " . htmlspecialchars($e->getMessage()) . "</p>";
     exit();
@@ -29,7 +62,39 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customer Dashboard - AgriBuzz</title>
+
     <style>
+     .button {
+                background-color: #f44336;
+                color: white;
+                padding: 10px 20px;
+                text-decoration: none;
+                border-radius: 4px;
+                display: inline-block;
+                text-align: center;
+                margin-right:0;
+            }
+
+             header {
+                        background: #5cb85c;
+                        color: white;
+                        padding: 10px 20px;
+                        text-align: center;
+
+                        border-bottom: 2px solid #4cae4c;
+                    }
+                    header h1 {
+                        margin: 0;
+                        text-color: white;
+                    }
+                    header a {
+                        color: white;
+                        text-decoration: none;
+                        font-size: 14px;
+                        margin-left: 15px;
+                    }
+
+
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -40,6 +105,8 @@ try {
             text-align: center;
             color: #333;
         }
+
+
         .product-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -82,9 +149,63 @@ try {
         .add-to-cart:hover {
             background-color: #4cae4c;
         }
+        .cart-container {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin: 20px auto;
+            max-width: 1200px;
+            border-radius: 8px;
+        }
+        .cart-container h2 {
+            text-align: center;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .cart-total {
+            text-align: left;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .remove-btn {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .confirm-btn {
+            background-color: #5cb85c;  /* Green color */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+
+
+        .confirm-btn {
+            margin-top: 20px; /* Adjust spacing from the content above */
+        }
+
+        .confirm-btn:hover {
+            background-color: #4cae4c; /* Darker green on hover */
+        }
+
     </style>
 </head>
 <body>
+<header>
+        <h1>Customer Dashboard - SmartAgri </h1>
+        <a href="logout.php" class="button">Logout</a>
+    </header>
     <h1>Welcome, <?= htmlspecialchars($_SESSION['username']); ?>!</h1>
     <h2>Available Crops</h2>
 
@@ -94,15 +215,42 @@ try {
                 <div class="product-card">
                     <img src="uploads/<?= htmlspecialchars($row['image']); ?>" alt="<?= htmlspecialchars($row['name']); ?>">
                     <h3><?= htmlspecialchars($row['name']); ?></h3>
-                    <p>Price: ₹<?= htmlspecialchars($row['price']); ?></p>
-                    <form method="POST" action="add_to_cart.php">
+                    <p>Price: TK. <?= htmlspecialchars($row['price']); ?></p>
+                    <form method="POST">
                         <input type="hidden" name="product_id" value="<?= htmlspecialchars($row['id']); ?>">
-                        <input type="submit" value="Add to Cart" class="add-to-cart">
+                        <input type="submit" name="add_to_cart" value="Add to Cart" class="add-to-cart">
                     </form>
                 </div>
             <?php endwhile; ?>
         <?php else: ?>
             <p style="text-align: center;">No products available at the moment.</p>
+        <?php endif; ?>
+    </div>
+
+    <!-- Cart Section -->
+    <div class="cart-container">
+        <h2>Your Cart</h2>
+        <?php if (!empty($_SESSION['cart'])): ?>
+            <?php
+            $totalPrice = 0;
+            foreach ($_SESSION['cart'] as $item):
+                $totalPrice += $item['price'];
+            ?>
+                <div class="cart-item">
+                    <span><?= htmlspecialchars($item['name']); ?> - TK. <?= htmlspecialchars($item['price']); ?></span>
+                    <form method="POST">
+                        <input type="hidden" name="product_id" value="<?= htmlspecialchars($item['id']); ?>">
+                        <input type="submit" name="remove_from_cart" value="Remove" class="remove-btn">
+                    </form>
+                </div>
+            <?php endforeach; ?>
+            <div class="cart-total">Total: TK. <?= htmlspecialchars($totalPrice); ?></div>
+            <form method="POST">
+                <button type="submit" name="confirm_order" class="confirm-btn">Confirm Order</button>
+
+            </form>
+        <?php else: ?>
+            <p>Your cart is empty.</p>
         <?php endif; ?>
     </div>
 </body>
