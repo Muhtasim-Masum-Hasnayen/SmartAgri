@@ -96,15 +96,17 @@ session_start();
 
     <div style="display: flex;">
         <div class="sidebar">
-            <h2>Navigation</h2>
-            <a href="#" onclick="loadContent('crop_management.php')">Crop/Product Management</a>
-            <a href="#" onclick="loadContent('farmer/order_management.php')">Order Management</a>
-            <a href="#" onclick="loadContent('farmer/inventory_management.php')">Inventory Management</a>
-            <a href="#" onclick="loadContent('farmer/labor_hiring.php')">Labor Hiring</a>
-            <a href="#" onclick="loadContent('farmer/financial_overview.php')">Financial Overview</a>
-            <a href="#" onclick="loadContent('farmer/analytics_reports.php')">Analytics and Reports</a>
-            <a href="#" onclick="loadContent('farmer/my_account.php')">My Account</a>
-        </div>
+        
+    <h2>Navigation</h2>
+    <a href="crop_management.php">Crop/Product Management</a>
+    <a href="farmer/order_management.php">Order Management</a>
+    <a href="farmer/inventory_management.php">Inventory Management</a>
+    <a href="farmer/labor_hiring.php">Labor Hiring</a>
+    <a href="farmer/financial_overview.php">Financial Overview</a>
+    <a href="farmer/analytics_reports.php">Analytics and Reports</a>
+    <a href="farmer/my_account.php">My Account</a>
+</div>
+
         <div class="main-content">
             <div class="content-container" id="dynamicContent">
                 <h2>Welcome to the Farmer Dashboard</h2>
@@ -113,38 +115,14 @@ session_start();
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        // Modified loadContent function
-        function loadContent(page) {
-            const contentContainer = document.getElementById('dynamicContent');
-            fetch(page)
-                .then(response => response.text())
-                .then(html => {
-                    contentContainer.innerHTML = html;
-                    // Re-attach event handlers if needed
-                    attachEventHandlers();
-                })
-                .catch(err => {
-                    contentContainer.innerHTML = '<p>Error loading page.</p>';
-                    console.error('Error loading content:', err);
-                });
-        }
 
-        // Function to attach event handlers after dynamic content is loaded
-        function attachEventHandlers() {
-            // Add event listeners to all select buttons
-            document.querySelectorAll('.select-crop-btn').forEach(button => {
-                button.addEventListener('click', function(e) {
-                    const productId = this.getAttribute('data-product-id');
-                    const cropName = this.getAttribute('data-crop-name');
-                    window.selectCrop(productId, cropName);
-                });
-            });
-            console.log('Content loaded and handlers attached');
-        }
-    </script>
+
+
+
+
+
+
+
 </body>
+
 </html>

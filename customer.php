@@ -19,7 +19,7 @@ try {
         $productId = $_POST['product_id'];
 
         // Fetch product details
-        $stmt = $conn->prepare("SELECT * FROM products WHERE id = ?");
+        $stmt = $conn->prepare("SELECT * FROM farmer_crops WHERE id = ?");
         $stmt->bind_param("i", $productId);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -42,7 +42,7 @@ try {
     }
 
     // Fetch products from the database
-    $sql = "SELECT * FROM products";
+    $sql = "SELECT * FROM farmer_crops";
     $result = $conn->query($sql);
 
     if (!$result) {
@@ -61,7 +61,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Dashboard - AgriBuzz</title>
+    <title>Customer Dashboard - SmartAgri</title>
 
     <style>
      .button {
