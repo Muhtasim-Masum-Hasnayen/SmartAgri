@@ -172,11 +172,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
                 try {
                     if (isset($_GET['search']) && !empty($_GET['search'])) {
                         $search = '%' . $_GET['search'] . '%';
-                        $stmt = $conn->prepare("SELECT id, name, image FROM products WHERE name LIKE ?");
+                        $stmt = $conn->prepare("SELECT id, name, image, quantity_type FROM products WHERE name LIKE ?");
                         $stmt->bind_param("s", $search);
                     } else {
-                        $stmt = $conn->prepare("SELECT id, name, image FROM products");
+                        $stmt = $conn->prepare("SELECT id, name, image, quantity_type FROM products");
                     }
+                    
 
                     $stmt->execute();
                     $result = $stmt->get_result();
@@ -188,7 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
                             <tr>
     <td><?= htmlspecialchars($product['id'] ?? ''); ?></td>
     <td>
-        <img src="uploads/<?= htmlspecialchars($product['image'] ?? ''); ?>" 
+        <img src="<?= htmlspecialchars($product['image'] ?? ''); ?>" 
              alt="<?= htmlspecialchars($product['name'] ?? ''); ?>" 
              width="100" height="100">
     </td>
@@ -199,7 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
                 onclick="selectCrop(
                     '<?= $product['id'] ?? ''; ?>', 
                     '<?= htmlspecialchars($product['name'] ?? ''); ?>', 
-                    '<?= htmlspecialchars($product['quantity_type'] ?? 'Per-KG'); ?>'
+                    '<?= htmlspecialchars($product['quantity_type'] ?? ''); ?>'
                 )">
             Select
         </button>
@@ -316,7 +317,7 @@ function openAddProductModal() {
 
     // Function to handle crop selection
     function selectCrop(productId, cropName, quantityType) {
-    console.log('selectCrop called with:', productId, cropName, quantityType);
+    console.log('selectCrop called with :', productId, cropName, quantityType);
     
     // Set the product ID and quantity type in the hidden inputs
     document.getElementById('product_id').value = productId;
@@ -328,13 +329,20 @@ function openAddProductModal() {
     // Set the name field with the selected crop name
     document.getElementById('name').value = cropName;
 
-    // Update quantity type labels
-    const quantityTypeLabels = document.getElementsByClassName('quantity-type-label');
-    const displayText = quantityType === 'Per-KG' ? '/kg' : '/piece';
-    
-    Array.from(quantityTypeLabels).forEach(label => {
-        label.textContent = displayText;
-    });
+// Update quantity type labels
+const quantityTypeLabels = document.getElementsByClassName('quantity-type-label');
+const priceDisplayText = quantityType === 'Per-KG' ? '/kg' : '/piece';
+const quantityDisplayText = quantityType === 'Per-KG' ? 'kg' : 'pieces';
+
+   // Convert HTMLCollection to Array and update each label
+Array.from(quantityTypeLabels).forEach((label, index) => {
+    // First label is for price, second is for quantity
+    if (index === 0) {
+        label.textContent = priceDisplayText;
+    } else {
+        label.textContent = quantityDisplayText;
+    }
+});
 
     // Show the modal
     const modal = new bootstrap.Modal(document.getElementById('addProductModal'));

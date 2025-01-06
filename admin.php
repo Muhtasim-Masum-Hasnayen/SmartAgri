@@ -29,31 +29,80 @@ $orders_result = $conn->query("SELECT o.*, p.name AS product_name, u.name AS cus
 
 
 
-// Handle product addition
+
+
+
+// Handle Add Product
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_product'])) {
     $product_name = htmlspecialchars($_POST['product_name']);
-    $product_price = htmlspecialchars($_POST['product_price']);
+    $quantity_type = htmlspecialchars($_POST['quantity_type']);
+    $image_path = ''; // Initialize as empty
 
     // Handle image upload
     if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
         $image_tmp = $_FILES['product_image']['tmp_name'];
         $image_name = basename($_FILES['product_image']['name']);
-        $image_path = 'uploads/' . $image_name; // Path where the image will be stored
+        $image_path = 'uploads/' .$image_name;
 
-        // Move the uploaded image to the desired location
-        move_uploaded_file($image_tmp, $image_path);
+        // Ensure 'uploads/' directory exists
+        if (!is_dir('uploads')) {
+            mkdir('uploads', 0777, true);
+        }
 
-        // Insert the product into the database
-        $sql = "INSERT INTO products (name, price, image) VALUES (?, ?, ?)";
+        if (move_uploaded_file($image_tmp, 'uploads/' . $image_name)) {
+            // Insert into database
+            $sql = "INSERT INTO products (name, image, quantity_type) VALUES (?, ?, ?)";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("sss", $product_name, $image_path, $quantity_type);
+            $stmt->execute();
+
+            // Redirect to refresh page
+            header('Location: admin.php');
+            exit();
+        } else {
+            $error = "Error uploading the image to the server.";
+        }
+    } else {
+        $error = "Please upload a valid image.";
+    }
+}
+
+// Handle Update Product
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_product'])) {
+    $product_name = htmlspecialchars($_POST['product_name']);
+    $quantity_type = htmlspecialchars($_POST['quantity_type']);
+    $image_path = $product_image; // Keep current image by default
+
+    // Handle new image upload
+    if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
+        $image_tmp = $_FILES['product_image']['tmp_name'];
+        $image_name = basename($_FILES['product_image']['name']);
+        $image_path = $image_name;
+
+        // Move uploaded image to 'uploads/' folder
+        if (move_uploaded_file($image_tmp, 'uploads/' . $image_path)) {
+            // Update product in database
+            $sql = "UPDATE products SET name = ?, image = ?, quantity_type = ? WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("sssi", $product_name, $image_path, $quantity_type, $product_id);
+            $stmt->execute();
+
+            // Redirect to refresh page
+            header('Location: admin.php');
+            exit();
+        } else {
+            $error = "Error uploading image.";
+        }
+    } else {
+        // No image upload, just update name and quantity type
+        $sql = "UPDATE products SET name = ?, quantity_type = ? WHERE id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sss", $product_name, $product_price, $image_path);
+        $stmt->bind_param("ssi", $product_name, $quantity_type, $product_id);
         $stmt->execute();
 
-        // Redirect or display a success message
-        header('Location: admin.php'); // Redirect to refresh the page and show the new product
-        exit();
-    } else {
-        $error = "Error uploading image.";
+        // Redirect to refresh page
+//             header('Location: admin.php');
+//             exit();
     }
 }
 
@@ -77,6 +126,10 @@ if (isset($_GET['delete_product']) && is_numeric($_GET['delete_product'])) {
         exit();
     }
 }
+
+
+
+
 
 // Handle user deletion
 if (isset($_GET['delete_user']) && is_numeric($_GET['delete_user'])) {
@@ -269,7 +322,7 @@ if (isset($_GET['delete_user']) && is_numeric($_GET['delete_user'])) {
                     <td><?= htmlspecialchars($product['id']); ?></td>
                     <td>
                         <!-- Display Product Image -->
-                        <img src="uploads/<?= htmlspecialchars($product['image']); ?>" alt="<?= htmlspecialchars($product['name']); ?>" width="100" height="100">
+                        <img src="<?= htmlspecialchars($product['image']); ?>" alt="<?= htmlspecialchars($product['name']); ?>" width="100" height="100">
                     </td>
                     <td><?= htmlspecialchars($product['name']); ?></td>
                     <td>
@@ -329,84 +382,7 @@ if (isset($_GET['delete_user']) && is_numeric($_GET['delete_user'])) {
         <?php endif; ?>
     </form>
 
-    <?php
-    // Handle Add Product
-    if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_product'])) {
-        $product_name = htmlspecialchars($_POST['product_name']);
-        $quantity_type = htmlspecialchars($_POST['quantity_type']);
-        $image_path = ''; // Initialize as empty
-
-        // Handle image upload
-        if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
-            $image_tmp = $_FILES['product_image']['tmp_name'];
-            $image_name = basename($_FILES['product_image']['name']);
-            $image_path = $image_name;
-
-            // Ensure 'uploads/' directory exists
-            if (!is_dir('uploads')) {
-                mkdir('uploads', 0777, true);
-            }
-
-            if (move_uploaded_file($image_tmp, 'uploads/' . $image_name)) {
-                // Insert into database
-                $sql = "INSERT INTO products (name, image, quantity_type) VALUES (?, ?, ?)";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("sss", $product_name, $image_path, $quantity_type);
-                $stmt->execute();
-
-                // Redirect to refresh page
-                header('Location: admin.php');
-                exit();
-            } else {
-                $error = "Error uploading the image to the server.";
-            }
-        } else {
-            $error = "Please upload a valid image.";
-        }
-    }
-
-    // Handle Update Product
-    if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_product'])) {
-        $product_name = htmlspecialchars($_POST['product_name']);
-        $quantity_type = htmlspecialchars($_POST['quantity_type']);
-        $image_path = $product_image; // Keep current image by default
-
-        // Handle new image upload
-        if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
-            $image_tmp = $_FILES['product_image']['tmp_name'];
-            $image_name = basename($_FILES['product_image']['name']);
-            $image_path = $image_name;
-
-            // Move uploaded image to 'uploads/' folder
-            if (move_uploaded_file($image_tmp, 'uploads/' . $image_path)) {
-                // Update product in database
-                $sql = "UPDATE products SET name = ?, image = ?, quantity_type = ? WHERE id = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("sssi", $product_name, $image_path, $quantity_type, $product_id);
-                $stmt->execute();
-
-                // Redirect to refresh page
-                header('Location: admin.php');
-                exit();
-            } else {
-                $error = "Error uploading image.";
-            }
-        } else {
-            // No image upload, just update name and quantity type
-            $sql = "UPDATE products SET name = ?, quantity_type = ? WHERE id = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssi", $product_name, $quantity_type, $product_id);
-            $stmt->execute();
-
-            // Redirect to refresh page
-//             header('Location: admin.php');
-//             exit();
-        }
-    }
-    ?>
 </div>
-
-
 
                     <!-- Supplies Section -->
                     <section>
