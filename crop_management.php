@@ -91,8 +91,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
             margin: 0 auto;
         }
         .preview-image {
-            max-width: 200px;
-            max-height: 200px;
+            max-width: 300px;
+            max-height: 300px;
             display: none;
             margin-top: 10px;
         }
@@ -103,6 +103,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             margin-top: 20px;
         }
+        .img-thumbnail {
+                max-width: 200px; /* Increased width */
+                max-height: 200px; /* Increased height */
+                object-fit: cover; /* Ensures the image fits within the dimensions */
+            }
+            table td {
+                vertical-align: middle; /* Center aligns content vertically */
+                text-align: center; /* Center aligns content horizontally */
+            }
     </style>
 </head>
 <body>
@@ -177,15 +186,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
                                 <td><?php echo htmlspecialchars($product['name']); ?></td>
                                 <td>
                                     <?php if (!empty($product['image'])): ?>
-                                        <img src="<?php echo htmlspecialchars($product['image']); ?>" 
+                                        <img src="<?php echo htmlspecialchars($product['image']); ?>"
                                              alt="<?php echo htmlspecialchars($product['name']); ?>"
-                                             class="img-thumbnail" style="max-width: 100px;">
+                                             class="img-thumbnail">
                                     <?php else: ?>
                                         No Photo
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <button class="btn btn-primary btn-sm" 
+                                    <button class="btn btn-primary btn-sm"
                                             onclick="selectCrop('<?php echo $product['id']; ?>', '<?php echo htmlspecialchars($product['name'], ENT_QUOTES); ?>')">
                                         Select
                                     </button>
@@ -196,7 +205,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
                     } else {
                         echo '<tr><td colspan="4" class="text-center">No crops found</td></tr>';
                     }
-                    
+
                     $stmt->close();
                 } catch (Exception $e) {
                     echo '<tr><td colspan="4" class="text-center text-danger">Error: ' . htmlspecialchars($e->getMessage()) . '</td></tr>';
@@ -205,6 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
             </tbody>
         </table>
     </div>
+
 
     
 
