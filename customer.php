@@ -42,8 +42,21 @@ try {
     }
 
     // Fetch products from the database
-    $sql = "SELECT * FROM farmer_crops";
-    $result = $conn->query($sql);
+   // $sql = "SELECT * FROM farmer_crops";
+    //$result = $conn->query($sql);
+
+
+// Update your SELECT query to join with products table
+$query = "SELECT fc.*, p.image as product_image 
+          FROM farmer_crops fc 
+          LEFT JOIN products p ON fc.product_id = p.id 
+          WHERE fc.status = 'available' 
+          ORDER BY fc.created_at DESC";
+$result = $conn->query($query);
+
+
+
+
 
     if (!$result) {
         throw new Exception("Error fetching products: " . $conn->error);
@@ -105,6 +118,27 @@ try {
             text-align: center;
             color: #333;
         }
+
+
+        
+    .card-img-top {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        background-color: #f8f9fa;
+    }
+
+    .product-card {
+        transition: transform 0.2s;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+    }
+
+
+
+
 
 
         .product-grid {
@@ -199,6 +233,89 @@ try {
             background-color: #4cae4c; /* Darker green on hover */
         }
 
+
+
+
+    
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .product-card {
+        background: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .card-img-top {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .card-body {
+        padding: 15px;
+    }
+
+    .card-title {
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+    }
+
+    .card-text {
+        color: #666;
+        margin-bottom: 10px;
+    }
+
+    .btn-primary {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        background: #007bff;
+        color: white;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .btn-primary:hover {
+        background: #0056b3;
+    }
+   
+    /* Add these to your existing styles */
+    .card-text {
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .form-control {
+        margin-bottom: 1rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    /* Style for out of stock items */
+    .out-of-stock {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    /* Style for low stock warning */
+    .low-stock {
+        color: #ffc107;
+        font-weight: bold;
+    }
+
+    /* Style for in stock */
+    .in-stock {
+        color: #28a745;
+    }
+
     </style>
 </head>
 <body>
@@ -210,22 +327,50 @@ try {
     <h2>Available Crops</h2>
 
     <div class="product-grid">
-        <?php if ($result->num_rows > 0): ?>
-            <?php while ($row = $result->fetch_assoc()): ?>
-                <div class="product-card">
-                    <img src="uploads/<?= htmlspecialchars($row['image']); ?>" alt="<?= htmlspecialchars($row['name']); ?>">
-                    <h3><?= htmlspecialchars($row['name']); ?></h3>
-                    <p>Price: TK. <?= htmlspecialchars($row['price']); ?></p>
-                    <form method="POST">
-                        <input type="hidden" name="product_id" value="<?= htmlspecialchars($row['id']); ?>">
-                        <input type="submit" name="add_to_cart" value="Add to Cart" class="add-to-cart">
-                    </form>
+    <?php if ($result->num_rows > 0): ?>
+        <?php while ($row = $result->fetch_assoc()): ?>
+            <div class="product-card">
+                <div class="card">
+                    <?php
+                    // Use farmer_crops image if available, otherwise use product image
+                    $display_image = !empty($row['image']) ? $row['image'] : $row['product_image'];
+                    ?>
+                    <img src="<?= htmlspecialchars($display_image); ?>" 
+                         class="card-img-top" 
+                         alt="<?= htmlspecialchars($row['name']); ?>"
+                         style="height: 200px; object-fit: cover;">
+                    <div class="card-body">
+                        <h3 class="card-title"><?= htmlspecialchars($row['name']); ?></h3>
+                        <p class="card-text">Price: TK. <?= htmlspecialchars($row['price']); ?> / <?= htmlspecialchars($row['quantity_type']); ?></p>
+                        <p class="card-text">Available Quantity: <?= htmlspecialchars($row['quantity']); ?> <?= htmlspecialchars($row['quantity_type']); ?></p>
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label for="quantity_<?= $row['id'] ?>" class="form-label">Purchase Quantity:</label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="quantity_<?= $row['id'] ?>" 
+                                       name="quantity" 
+                                       min="1" 
+                                       max="<?= htmlspecialchars($row['quantity']); ?>" 
+                                       value="1" 
+                                       required>
+                            </div>
+                            <input type="hidden" name="product_id" value="<?= htmlspecialchars($row['id']); ?>">
+                            <input type="submit" 
+                                   name="add_to_cart" 
+                                   value="Add to Cart" 
+                                   class="add-to-cart btn btn-primary w-100"
+                                   <?= ($row['quantity'] <= 0) ? 'disabled' : '' ?>>
+                        </form>
+                    </div>
                 </div>
-            <?php endwhile; ?>
-        <?php else: ?>
-            <p style="text-align: center;">No products available at the moment.</p>
-        <?php endif; ?>
-    </div>
+            </div>
+        <?php endwhile; ?>
+    <?php else: ?>
+        <p style="text-align: center;">No products available at the moment.</p>
+    <?php endif; ?>
+</div>
+
 
     <!-- Cart Section -->
     <div class="cart-container">

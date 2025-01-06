@@ -20,19 +20,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
         error_log("Received POST data: " . print_r($_POST, true));
         
         // Validate inputs
-        if (empty($_POST['product_id']) || empty($_POST['name']) || empty($_POST['description']) || 
-            empty($_POST['price']) || empty($_POST['quantity'])) {
-            throw new Exception("All fields are required");
-        }
+        if (empty($_POST['product_id']) || empty($_POST['name']) || 
+        empty($_POST['description']) || empty($_POST['price']) || 
+        empty($_POST['quantity']) || empty($_POST['quantity_type'])) {
+        throw new Exception("All fields are required");
+    }
 
-        $product_id = $_POST['product_id'];
-        $name = $_POST['name'];  // Add this line
-        $farmer_id = $_SESSION['user_id'];
-        $description = $_POST['description'];
-        $price = $_POST['price'];
-        $quantity = $_POST['quantity'];
-        $status = 'available';
-
+    $product_id = $_POST['product_id'];
+    $name = $_POST['name'];
+    $farmer_id = $_SESSION['user_id'];
+    $description = $_POST['description'];
+    $price = $_POST['price'];
+    $quantity = $_POST['quantity'];
+    $quantity_type = $_POST['quantity_type'];
+    $status = 'available';
         // Handle file upload if present
         $image_path = '';
         if (isset($_FILES['photo']) && $_FILES['photo']['error'] == 0) {
@@ -51,15 +52,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
         }
 
         // Insert into database
-        $stmt = $conn->prepare("INSERT INTO farmer_crops (farmer_id, product_id, name, description, price, quantity, image, status) 
-                              VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        
+        $stmt = $conn->prepare("INSERT INTO farmer_crops 
+        (farmer_id, product_id, name, description, price, quantity, quantity_type, image, status) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    
         if (!$stmt) {
             throw new Exception("Prepare failed: " . $conn->error);
         }
 
-        $stmt->bind_param("iissdiis", $farmer_id, $product_id, $name, $description, $price, $quantity, $image_path, $status);
-
+        $stmt->bind_param("iissdisss", $farmer_id, $product_id, $name, 
+        $description, $price, $quantity, $quantity_type, $image_path, $status);
+    
         if (!$stmt->execute()) {
             throw new Exception("Execute failed: " . $stmt->error);
         }
@@ -181,25 +184,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
                     if ($result->num_rows > 0) {
                         while ($product = $result->fetch_assoc()) {
                             ?>
+                            <!-- In your table where you list products -->
                             <tr>
-                                <td><?php echo htmlspecialchars($product['id']); ?></td>
-                                <td><?php echo htmlspecialchars($product['name']); ?></td>
-                                <td>
-                                    <?php if (!empty($product['image'])): ?>
-                                        <img src="<?php echo htmlspecialchars($product['image']); ?>"
-                                             alt="<?php echo htmlspecialchars($product['name']); ?>"
-                                             class="img-thumbnail">
-                                    <?php else: ?>
-                                        No Photo
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <button class="btn btn-primary btn-sm"
-                                            onclick="selectCrop('<?php echo $product['id']; ?>', '<?php echo htmlspecialchars($product['name'], ENT_QUOTES); ?>')">
-                                        Select
-                                    </button>
-                                </td>
-                            </tr>
+    <td><?= htmlspecialchars($product['id'] ?? ''); ?></td>
+    <td>
+        <img src="uploads/<?= htmlspecialchars($product['image'] ?? ''); ?>" 
+             alt="<?= htmlspecialchars($product['name'] ?? ''); ?>" 
+             width="100" height="100">
+    </td>
+    <td><?= htmlspecialchars($product['name'] ?? ''); ?></td>
+    <td>
+        <button type="button" 
+                class="btn btn-primary" 
+                onclick="selectCrop(
+                    '<?= $product['id'] ?? ''; ?>', 
+                    '<?= htmlspecialchars($product['name'] ?? ''); ?>', 
+                    '<?= htmlspecialchars($product['quantity_type'] ?? 'Per-KG'); ?>'
+                )">
+            Select
+        </button>
+    </td>
+</tr>
+
+
                             <?php
                         }
                     } else {
@@ -217,8 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
 
 
     
-
-  <!-- Add Product Modal -->
+<!-- Add Product Modal -->
 <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -229,6 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
             <div class="modal-body">
                 <form method="POST" enctype="multipart/form-data" id="addProductForm" class="needs-validation" novalidate>
                     <input type="hidden" id="product_id" name="product_id">
+                    <input type="hidden" id="quantity_type" name="quantity_type">
                     <input type="hidden" name="add_product" value="1">
                     
                     <!-- Selected Crop Display -->
@@ -258,18 +265,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
                     <!-- Price Field -->
                     <div class="mb-3">
                         <label for="price" class="form-label">Price</label>
-                        <input type="number" class="form-control" id="price" name="price" step="0.01" required min="0">
-                        <div class="invalid-feedback">
-                            Please provide a valid price.
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="price" name="price" step="0.01" required min="0">
+                            <span class="input-group-text quantity-type-label"></span>
+                            <div class="invalid-feedback">
+                                Please provide a valid price.
+                            </div>
                         </div>
                     </div>
 
                     <!-- Quantity Field -->
                     <div class="mb-3">
                         <label for="quantity" class="form-label">Quantity</label>
-                        <input type="number" class="form-control" id="quantity" name="quantity" required min="1">
-                        <div class="invalid-feedback">
-                            Please provide a valid quantity.
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="quantity" name="quantity" required min="1">
+                            <span class="input-group-text quantity-type-label"></span>
+                            <div class="invalid-feedback">
+                                Please provide a valid quantity.
+                            </div>
                         </div>
                     </div>
 
@@ -290,6 +303,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     </div>
 </div>
 
+
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -301,26 +315,26 @@ function openAddProductModal() {
 
 
     // Function to handle crop selection
-    function selectCrop(productId, cropName) {
-    console.log('selectCrop called with:', productId, cropName); // Debug log
+    function selectCrop(productId, cropName, quantityType) {
+    console.log('selectCrop called with:', productId, cropName, quantityType);
     
-    // Set the product ID in the hidden input
-    const productIdInput = document.getElementById('product_id');
-    if (productIdInput) {
-        productIdInput.value = productId;
-    }
+    // Set the product ID and quantity type in the hidden inputs
+    document.getElementById('product_id').value = productId;
+    document.getElementById('quantity_type').value = quantityType;
 
     // Update the selected crop name display
-    const selectedCropDisplay = document.getElementById('selected-crop');
-    if (selectedCropDisplay) {
-        selectedCropDisplay.textContent = cropName;
-    }
+    document.getElementById('selected-crop').textContent = cropName;
 
     // Set the name field with the selected crop name
-    const nameInput = document.getElementById('name');
-    if (nameInput) {
-        nameInput.value = cropName;
-    }
+    document.getElementById('name').value = cropName;
+
+    // Update quantity type labels
+    const quantityTypeLabels = document.getElementsByClassName('quantity-type-label');
+    const displayText = quantityType === 'Per-KG' ? '/kg' : '/piece';
+    
+    Array.from(quantityTypeLabels).forEach(label => {
+        label.textContent = displayText;
+    });
 
     // Show the modal
     const modal = new bootstrap.Modal(document.getElementById('addProductModal'));
