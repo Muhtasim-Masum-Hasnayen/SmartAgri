@@ -187,13 +187,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
                             ?>
                             <!-- In your table where you list products -->
                             <tr>
+                            <tr>
     <td><?= htmlspecialchars($product['id'] ?? ''); ?></td>
+    <td><?= htmlspecialchars($product['name'] ?? ''); ?></td>
     <td>
         <img src="<?= htmlspecialchars($product['image'] ?? ''); ?>" 
-             alt="<?= htmlspecialchars($product['name'] ?? ''); ?>" 
+             alt="Image of <?= htmlspecialchars($product['name'] ?? ''); ?>" 
              width="100" height="100">
     </td>
-    <td><?= htmlspecialchars($product['name'] ?? ''); ?></td>
     <td>
         <button type="button" 
                 class="btn btn-primary" 
@@ -203,6 +204,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
                     '<?= htmlspecialchars($product['quantity_type'] ?? ''); ?>'
                 )">
             Select
+        </button>
+    </td>
+</tr>
+
         </button>
     </td>
 </tr>
