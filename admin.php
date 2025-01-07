@@ -151,6 +151,15 @@ if (isset($_GET['delete_user']) && is_numeric($_GET['delete_user'])) {
         exit();
     }
 }
+
+// Fetch product requests
+$query = "SELECT pr.id, pr.product_name, pr.product_image, pr.status,pr.quantity_type, f.name AS farmer_name
+          FROM product_requests pr
+          JOIN users f ON pr.farmer_id = f.user_id
+          WHERE pr.status = 'Pending'";
+ $result = $conn->query($query);
+
+
 ?>
 
 <!DOCTYPE html>
@@ -303,6 +312,50 @@ if (isset($_GET['delete_user']) && is_numeric($_GET['delete_user'])) {
         </div>
 
 
+
+<h2 class="mt-4">Product Requests</h2>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Product Name</th>
+            <th>Image</th>
+            <th>Farmer Name</th>
+            <th>Quantity Type</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php if ($result->num_rows > 0): ?>
+            <?php while ($row = $result->fetch_assoc()): ?>
+                <tr>
+                    <td><?php echo $row['id']; ?></td>
+                    <td><?php echo htmlspecialchars($row['product_name']); ?></td>
+                    <td>
+                        <img src="<?php echo htmlspecialchars($row['product_image']); ?>" alt="Product Image" width="100">
+                    </td>
+                    <td><?php echo htmlspecialchars($row['farmer_name']); ?></td>
+                    <td><?php echo htmlspecialchars($row['quantity_type']); ?></td>
+
+                    <td><span class="badge bg-warning"><?php echo htmlspecialchars($row['status']); ?></span></td>
+                    <td>
+                        <form method="POST" action="process_request.php" style="display:inline;">
+                            <input type="hidden" name="request_id" value="<?php echo $row['id']; ?>">
+                            <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">Approve</button>
+                            <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endwhile; ?>
+        <?php else: ?>
+            <tr>
+                <td colspan="6" class="text-center">No pending requests</td>
+            </tr>
+        <?php endif; ?>
+    </tbody>
+</table>
+
 <!-- Manage Products -->
 <div class="section">
     <h2>Manage Products</h2>
@@ -410,38 +463,6 @@ if (isset($_GET['delete_user']) && is_numeric($_GET['delete_user'])) {
                             </tbody>
                         </table>
                     </section>
-
-                    <!-- Orders Section -->
-                    <section>
-                        <h2>Manage Orders</h2>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Order ID</th>
-                                    <th>Customer</th>
-                                    <th>Product</th>
-                                    <th>Quantity</th>
-                                    <th>Total Price</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php while ($order = $orders_result->fetch_assoc()): ?>
-                                <tr>
-                                    <td><?= $order['order_id'] ?></td>
-                                    <td><?= $order['customer_name'] ?></td>
-                                    <td><?= $order['product_name'] ?></td>
-                                    <td><?= $order['quantity'] ?></td>
-                                    <td>$<?= number_format($order['total_price'], 2) ?></td>
-                                    <td><?= $order['status'] ?></td>
-                                </tr>
-                                <?php endwhile; ?>
-                            </tbody>
-                        </table>
-                    </section>
-
-
-
     </div>
 </body>
 </html>
