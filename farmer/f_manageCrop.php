@@ -71,7 +71,7 @@ if ($conn->connect_error) {
                             <td><?= htmlspecialchars($row['quantity']); ?></td>
                             <td><?= htmlspecialchars($row['price']); ?> USD</td>
                             <td>
-                                <a href="edit_crop.php?id=<?= $row['id']; ?>">Edit</a> | 
+                                <a href="edit_crop.php?id=<?= $row['id']; ?>">Edit</a> |
                                 <a href="delete_crop.php?id=<?= $row['id']; ?>">Delete</a>
                             </td>
                         </tr>
