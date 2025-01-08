@@ -1,73 +1,212 @@
 <?php
 session_start();
-include 'database.php'; // Include the database connection
-
+include 'database.php';
 
 try {
-    // Check if the user is logged in and has the role 'Customer'
+    // Check authentication
     if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Customer') {
-        throw new Exception("Unauthorized access. Please log in as a Customer.");
+        header("Location: login.php");
+        exit();
     }
 
-    // Initialize the cart in the session if not already set
-    if (!isset($_SESSION['cart'])) {
-        $_SESSION['cart'] = [];
-    }
+  // Fetch available products - this should be at the start of your try block
+  $productStmt = $conn->prepare("
+  SELECT fc.*, fc.farmer_id,p.image as product_image 
+  FROM farmer_crops fc 
+  LEFT JOIN products p ON fc.product_id = p.id
+  WHERE fc.quantity > 0
+");
 
-    // Handle adding items to the cart
+if (!$productStmt->execute()) {
+    throw new Exception("Error fetching products: " . $conn->error);
+}
+
+$products = $productStmt->get_result();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
+    $userId = $_SESSION['user_id'];
+    
+    try {
+        // Fetch cart items grouped by farmer
+        $stmt = $conn->prepare("
+            SELECT c.*, fc.name as crop_name, fc.farmer_id, fc.price,
+                   u.name as customer_name
+            FROM cart c
+            JOIN farmer_crops fc ON c.product_id = fc.product_id
+            JOIN users u ON c.user_id = u.user_id
+            WHERE c.user_id = ?
+        ");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $cartItems = $stmt->get_result();
+
+        if ($cartItems->num_rows > 0) {
+            $conn->begin_transaction();
+            try {
+                $orderQuery = $conn->prepare("
+                    INSERT INTO orders (
+                        farmer_id, 
+                        customer_id, 
+                        product_id, 
+                        customer_name, 
+                        crop_name, 
+                        quantity, 
+                        total_amount, 
+                        status, 
+                        order_date
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
+                ");
+
+                $orders = [];
+                while ($item = $cartItems->fetch_assoc()) {
+                    $farmerId = $item['farmer_id'];
+                    $orders[$farmerId][] = $item;
+                }
+
+                foreach ($orders as $farmerId => $items) {
+                    foreach ($items as $item) {
+                        $totalAmount = $item['price'] * $item['quantity'];
+                        $orderQuery->bind_param(
+                            "iiissid",
+                            $farmerId,
+                            $userId,
+                            $item['product_id'],
+                            $item['customer_name'],
+                            $item['crop_name'],
+                            $item['quantity'],
+                            $totalAmount
+                        );
+                        $orderQuery->execute();
+                    }
+                }
+
+                // Clear cart
+                $clearCart = $conn->prepare("DELETE FROM cart WHERE user_id = ?");
+                $clearCart->bind_param("i", $userId);
+                $clearCart->execute();
+
+                $conn->commit();
+                $_SESSION['message'] = "Orders placed successfully!";
+                header("Location: customer.php");
+                exit();
+            } catch (Exception $e) {
+                $conn->rollback();
+                $_SESSION['error'] = "Error placing orders: " . $e->getMessage();
+            }
+        } else {
+            $_SESSION['error'] = "Your cart is empty.";
+        }
+    } catch (Exception $e) {
+        $_SESSION['error'] = "Error processing orders: " . $e->getMessage();
+    }
+}
+
+
+  // Handle removing items from cart
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_from_cart'])) {
+    $productId = $_POST['product_id'];
+    $userId = $_SESSION['user_id'];
+
+    $stmt = $conn->prepare("DELETE FROM cart WHERE user_id = ? AND product_id = ?");
+    $stmt->bind_param("ii", $userId, $productId);
+    
+    if ($stmt->execute()) {
+        $_SESSION['message'] = "Product removed from cart successfully!";
+    } else {
+        $_SESSION['error'] = "Error removing product from cart.";
+    }
+}
+
+
+
+    // Handle adding items to cart
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         $productId = $_POST['product_id'];
+        $userId = $_SESSION['user_id'];
+        $farmer_id=$_POST['farmer_id'];
+        $quantity = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 1;
 
-        // Fetch product details
-        $stmt = $conn->prepare("SELECT * FROM farmer_crops WHERE id = ?");
-        $stmt->bind_param("i", $productId);
+
+
+
+        // Check if product already exists in cart
+        $stmt = $conn->prepare("SELECT * FROM cart WHERE user_id = ? AND product_id = ?");
+        $stmt->bind_param("ii", $userId, $productId);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($result->num_rows > 0) {
-            $product = $result->fetch_assoc();
-            // Add product to the cart
-            $_SESSION['cart'][$productId] = [
-                'id' => $product['id'],
-                'name' => $product['name'],
-                'price' => $product['price']
-            ];
+            // Update quantity if product exists
+            $stmt = $conn->prepare("UPDATE cart SET quantity = quantity + ? WHERE user_id = ? AND product_id = ?");
+            $stmt->bind_param("iii", $quantity, $userId, $productId);
+        } else {
+            // Insert new cart item
+
+            $stmt = $conn->prepare("INSERT INTO cart (user_id, product_id,farmer_id, quantity) VALUES (?, ?,?, ?)");
+            $stmt->bind_param("iiii", $userId, $productId,$farmer_id, $quantity);
+        }
+
+        if ($stmt->execute()) {
+            $_SESSION['message'] = "Product added to cart successfully!";
+        } else {
+            $_SESSION['error'] = "Error adding product to cart.";
         }
     }
 
-    // Handle removing items from the cart
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_from_cart'])) {
-        $productId = $_POST['product_id'];
-        unset($_SESSION['cart'][$productId]);
-    }
+   
+    // Fetch cart items
+    $cartStmt = $conn->prepare("
+        SELECT c.*, fc.name, fc.price, fc.quantity_type, fc.image
+        FROM cart c
+        JOIN farmer_crops fc ON c.product_id = fc.product_id
+        WHERE c.user_id = ?
+    ");
+    $cartStmt->bind_param("i", $_SESSION['user_id']);
+    $cartStmt->execute();
+    $cartItems = $cartStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-    // Fetch products from the database
-   // $sql = "SELECT * FROM farmer_crops";
-    //$result = $conn->query($sql);
+    // Calculate cart total
+    $cartTotal = array_sum(array_map(function($item) {
+        return $item['price'] * $item['quantity'];
+    }, $cartItems));
 
-
-// Update your SELECT query to join with products table
-$query = "SELECT fc.*, p.image as product_image 
-          FROM farmer_crops fc 
-          LEFT JOIN products p ON fc.product_id = p.id 
-          WHERE fc.status = 'available' 
-          ORDER BY fc.created_at DESC";
-$result = $conn->query($query);
-
-
-
-
-
-    if (!$result) {
-        throw new Exception("Error fetching products: " . $conn->error);
-    }
 } catch (Exception $e) {
-    // Log the error and display a friendly message
     error_log($e->getMessage());
-    echo "<p style='color: red; text-align: center;'>An error occurred: " . htmlspecialchars($e->getMessage()) . "</p>";
+    $_SESSION['error'] = "An error occurred while processing your request.";
+}
+
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_quantity'])) {
+    $productId = $_POST['product_id'];
+    $userId = $_SESSION['user_id'];
+    $action = $_POST['update_quantity'];
+
+    if ($action === 'increase') {
+        $stmt = $conn->prepare("UPDATE cart SET quantity = quantity + 1 WHERE user_id = ? AND product_id = ?");
+    } elseif ($action === 'decrease') {
+        $stmt = $conn->prepare("UPDATE cart SET quantity = GREATEST(quantity - 1, 1) WHERE user_id = ? AND product_id = ?");
+    }
+
+    $stmt->bind_param("ii", $userId, $productId);
+    if ($stmt->execute()) {
+        $_SESSION['message'] = "Cart updated successfully!";
+    } else {
+        $_SESSION['error'] = "Error updating cart.";
+    }
+
+    header("Location: customer.php");
     exit();
 }
+
+
+
+
+
+
 ?>
+
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -75,396 +214,10 @@ $result = $conn->query($query);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customer Dashboard - SmartAgri</title>
+    <link rel="stylesheet" href="css/customer.css">
+    <link rel="stylesheet" href="css/customer.css">
 
-    <style>
-     /* Body and General Styles */
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f4;
-}
-
-h1, h2 {
-    text-align: center;
-    color: #333;
-}
-
-/* Header Styles */
-header {
-    background: #5cb85c;
-    color: white;
-    padding: 10px 20px;
-    text-align: center;
-    border-bottom: 2px solid #4cae4c;
-}
-
-header h1 {
-    margin: 0;
-    color: white;
-}
-
-header a {
-    color: white;
-    text-decoration: none;
-    font-size: 14px;
-    margin-left: 15px;
-}
-
-/* Button Styles */
-.button {
-    background-color: #f44336;
-    color: white;
-    padding: 10px 20px;
-    text-decoration: none;
-    border-radius: 4px;
-    display: inline-block;
-    text-align: center;
-    margin-right: 0;
-}
-
-/* Product Grid and Cards */
-.product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.product-card {
-    background: #fff;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 15px;
-    text-align: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s;
-    cursor: pointer;
-}
-
-.product-card:hover {
-    transform: translateY(-5px);
-}
-
-.product-card img {
-    max-width: 100%;
-    height: 150px;
-    object-fit: cover;
-    border-radius: 5px;
-}
-
-.product-card h3 {
-    margin: 10px 0;
-    font-size: 18px;
-}
-
-.product-card p {
-    font-size: 16px;
-    color: #555;
-}
-
-.card-img-top {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    background-color: #f8f9fa;
-}
-
-/* Stylish Cart Icon Button */
-.cart-icon {
-    position: fixed;
-    top: 20px;
-    right: calc(30px + 1cm); /* Moved 5 cm to the left */
-    background-color: #5cb85c;
-    color: white;
-    padding: 12px 25px;
-    border-radius: 50px;
-    cursor: pointer;
-    z-index: 1000;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-    border: 2px solid rgba(255,255,255,0.3);
-}
-
-.cart-icon:before {
-    content: '🛒'; /* Shopping cart emoji */
-    font-size: 1.2em;
-}
-
-.cart-icon:hover {
-    background-color: #4cae4c;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0,0,0,0.25);
-}
-
-.cart-count {
-    background-color: #ff4444;
-    color: white;
-    border-radius: 50%;
-    padding: 4px 8px;
-    font-size: 12px;
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    border: 2px solid white;
-    font-weight: bold;
-    min-width: 10px;
-    text-align: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    animation: pulse 1.5s infinite;
-}
-
-/* Animation for cart count */
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
-    100% {
-        transform: scale(1);
-    }
-}
-
-/* Optional: Add animation when cart updates */
-.cart-icon.shake {
-    animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
-}
-
-@keyframes shake {
-    10%, 90% {
-        transform: translate3d(-1px, 0, 0);
-    }
-    20%, 80% {
-        transform: translate3d(2px, 0, 0);
-    }
-    30%, 50%, 70% {
-        transform: translate3d(-2px, 0, 0);
-    }
-    40%, 60% {
-        transform: translate3d(2px, 0, 0);
-    }
-}
-
-/* Modal Styles */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
-    z-index: 1001;
-}
-
-.modal-content {
-    background-color: white;
-    margin: 15% auto;
-    padding: 20px;
-    border-radius: 5px;
-    width: 70%;
-    max-width: 500px;
-    position: relative;
-}
-
-.close {
-    position: absolute;
-    right: 10px;
-    top: 5px;
-    font-size: 24px;
-    cursor: pointer;
-}
-
-/* Cart Sidebar Styles */
-.cart-sidebar {
-    position: fixed;
-    top: 0;
-    right: -400px;
-    width: 400px;
-    height: 100%;
-    background-color: white;
-    box-shadow: -2px 0 5px rgba(0,0,0,0.2);
-    transition: right 0.3s ease;
-    z-index: 1002;
-    padding: 20px;
-    overflow-y: auto;
-}
-
-.cart-sidebar.active {
-    right: 0;
-}
-
-.cart-sidebar .cart-item {
-    border-bottom: 1px solid #ddd;
-    padding: 10px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.cart-sidebar .cart-total {
-    margin-top: 20px;
-    font-size: 1.2em;
-    font-weight: bold;
-    text-align: right;
-}
-
-/* Cart Sidebar Header */
-.cart-sidebar h2 {
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #5cb85c;
-}
-
-/* Cart Item Styles in Sidebar */
-.cart-sidebar .cart-item h4 {
-    margin: 0 0 5px 0;
-    font-size: 1rem;
-}
-
-.cart-sidebar .cart-item p {
-    margin: 0;
-    font-size: 0.9rem;
-    color: #666;
-}
-
-/* Cart Sidebar Button Styles */
-.cart-sidebar .btn-danger {
-    padding: 5px 10px;
-    font-size: 0.8rem;
-    background-color: #d9534f;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.cart-sidebar .btn-danger:hover {
-    background-color: #c9302c;
-}
-
-/* Modal Product Details */
-#productDetails img {
-    max-width: 100%;
-    height: auto;
-    margin: 10px 0;
-}
-
-#productDetails h2 {
-    color: #333;
-    margin-bottom: 15px;
-}
-
-#productDetails p {
-    margin-bottom: 10px;
-    color: #666;
-}
-
-#productDetails .form-group {
-    margin-bottom: 15px;
-}
-
-#productDetails .form-control {
-    width: 100%;
-    padding: 8px;
-    margin-top: 5px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-#productDetails .btn-primary {
-    width: 100%;
-    padding: 10px;
-    background-color: #5cb85c;
-    border: none;
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-#productDetails .btn-primary:hover {
-    background-color: #4cae4c;
-}
-
-/* Confirm Button Styles */
-.confirm-btn {
-    background-color: #5cb85c;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    cursor: pointer;
-    border-radius: 4px;
-    display: inline-block;
-    margin-top: 20px;
-}
-
-.confirm-btn:hover {
-    background-color: #4cae4c;
-}
-
-/* Remove Button Styles */
-.remove-btn {
-    background-color: #d9534f;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-    border-radius: 4px;
-}
-
-.remove-btn:hover {
-    background-color: #c9302c;
-}
-
-
-
-/* Additional Utility Styles */
-.text-center {
-    text-align: center;
-}
-
-.mt-3 {
-    margin-top: 15px;
-}
-
-.mb-3 {
-    margin-bottom: 15px;
-}
-
-/* Form Control Styles */
-.form-control {
-    width: 100%;
-    padding: 8px;
-    margin: 5px 0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
-
-/* Button Primary Styles */
-.btn-primary {
-    background-color: #5cb85c;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.btn-primary:hover {
-    background-color: #4cae4c;
-}
-
-
-    </style>
+ 
 </head>
 <body>
 <header>
@@ -482,32 +235,70 @@ header a {
     Cart <span class="cart-count"><?= count($_SESSION['cart'] ?? []) ?></span>
 </div>
 
-<!-- Cart Sidebar -->
+
+<!-- Update the cart section with confirmation -->
 <div class="cart-sidebar" id="cartSidebar">
     <h2>Shopping Cart</h2>
     <span class="close" onclick="toggleCart()">&times;</span>
     <div id="cartItems">
-        <?php if (!empty($_SESSION['cart'])): ?>
-            <?php foreach ($_SESSION['cart'] as $item): ?>
+        <?php if (!empty($cartItems)): ?>
+            <?php foreach ($cartItems as $item): ?>
                 <div class="cart-item">
-                    <div>
-                        <h4><?= htmlspecialchars($item['name']) ?></h4>
-                        <p>Quantity: <?= htmlspecialchars($item['quantity']) ?> <?= htmlspecialchars($item['quantity_type']) ?></p>
-                        <p>Price: TK. <?= htmlspecialchars($item['price'] * $item['quantity']) ?></p>
-                    </div>
-                    <button onclick="removeFromCart(<?= $item['id'] ?>)" class="btn-danger">Remove</button>
-                </div>
+    <div>
+        <h4><?= htmlspecialchars($item['name']) ?></h4>
+        <p>Price: TK. <?= htmlspecialchars($item['price']) ?></p>
+        <div class="quantity-controls">
+            <form method="POST" style="display: inline;">
+                <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
+                <input type="hidden" name="update_quantity" value="decrease">
+                <button type="submit" class="btn-decrement">-</button>
+            </form>
+            <span><?= htmlspecialchars($item['quantity']) ?></span>
+            <form method="POST" style="display: inline;">
+                <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
+                <input type="hidden" name="update_quantity" value="increase">
+                <button type="submit" class="btn-increment">+</button>
+            </form>
+        </div>
+        <p>Total: TK. <?= htmlspecialchars($item['price'] * $item['quantity']) ?></p>
+    </div>
+    <form method="POST">
+        <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
+        <button type="submit" name="remove_from_cart" class="remove-btn">Remove</button>
+    </form>
+</div>
+
             <?php endforeach; ?>
             <div class="cart-total">
-                Total: TK. <?= array_sum(array_map(function($item) { 
-                    return $item['price'] * $item['quantity']; 
-                }, $_SESSION['cart'])) ?>
+                Total: TK. <?= htmlspecialchars($cartTotal) ?>
             </div>
+            <form method="POST" class="place-order-form" onsubmit="return confirmOrder()">
+                <button type="submit" name="place_order" class="btn-primary">Place Order</button>
+            </form>
         <?php else: ?>
             <p>Your cart is empty</p>
         <?php endif; ?>
     </div>
 </div>
+
+
+
+<!-- Add message display -->
+<?php if (isset($_SESSION['message'])): ?>
+    <div class="alert alert-success">
+        <?= htmlspecialchars($_SESSION['message']) ?>
+        <?php unset($_SESSION['message']); ?>
+    </div>
+<?php endif; ?>
+
+<?php if (isset($_SESSION['error'])): ?>
+    <div class="alert alert-danger">
+        <?= htmlspecialchars($_SESSION['error']) ?>
+        <?php unset($_SESSION['error']); ?>
+    </div>
+<?php endif; ?>
+
+        
 
 <!-- Product Modal -->
 <div id="productModal" class="modal">
@@ -518,10 +309,9 @@ header a {
 </div>
 
 
-
 <div class="product-grid">
-    <?php if ($result->num_rows > 0): ?>
-        <?php while ($row = $result->fetch_assoc()): ?>
+    <?php if ($products->num_rows > 0): ?>
+        <?php while ($row = $products->fetch_assoc()): ?>
             <div class="product-card" onclick="showProductDetails(<?= htmlspecialchars(json_encode($row)) ?>)">
                 <div class="card">
                     <?php
@@ -545,39 +335,50 @@ header a {
 </div>
 
 
+
     <script>
 function toggleCart() {
     document.getElementById('cartSidebar').classList.toggle('active');
 }
+function confirmOrder() {
+    return confirm('Are you sure you want to place this order?');
+}
+
 
 function showProductDetails(product) {
+
+
     const modal = document.getElementById('productModal');
     const details = document.getElementById('productDetails');
-    
+
 
     
     details.innerHTML = `
         <h2>${product.name}</h2>
         <img src="${product.image || product.product_image}" alt="${product.name}" style="max-width: 200px;">
-        <p>Price: TK. ${product.price} / ${product.quantity_type}</p>
-        <p>Available: ${product.quantity} ${product.quantity_type}</p>
-        <form onsubmit="return addToCart(event, ${JSON.stringify(product)})">
+        <p>Price: TK. ${product.price}</p>
+        <form method="POST">
+            <input type="hidden" name="product_id" value="${product.product_id}">
+             <input type="hidden" name="farmer_id" value="${product.farmer_id}">
             <div class="form-group">
                 <label>Quantity:</label>
                 <input type="number" 
-                       class="form-control" 
-                       id="modalQuantity" 
+                       name="quantity" 
                        min="1" 
-                       max="${product.quantity}" 
                        value="1" 
-                       required>
+                       required 
+                       class="form-control">
             </div>
-            <button type="submit" class="btn-primary mt-3">Add to Cart</button>
+ 
+
+
+            <button type="submit" name="add_to_cart" class="btn-primary">Add to Cart</button>
         </form>
     `;
     
-    modal.style.display = 'block';
+    modal.style.display = "block";
 }
+
 
 function closeModal() {
     document.getElementById('productModal').style.display = 'none';
@@ -587,71 +388,6 @@ function toggleCart() {
     document.getElementById('cartSidebar').classList.toggle('active');
 }
 
-function addToCart(event, product) {
-    event.preventDefault();
-    const quantity = parseInt(document.getElementById('modalQuantity').value);
-    
-    fetch('cart/add_to_cart.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            product_id: product.id,
-            quantity: quantity,
-            name: product.name,
-            price: product.price,
-            quantity_type: product.quantity_type
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            updateCart();
-            closeModal();
-            const cartIcon = document.querySelector('.cart-icon');
-            cartIcon.classList.add('shake');
-            setTimeout(() => {
-                cartIcon.classList.remove('shake');
-            }, 820);
-        } else {
-            alert(data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while adding to cart');
-    });
-    
-    return false;
-}
-
-function removeFromCart(productId) {
-    fetch('cart/remove_from_cart.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            product_id: productId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            updateCart();
-        }
-    });
-}
-
-function updateCart() {
-    fetch('cart/get_cart.php')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('cartItems').innerHTML = data.html;
-            document.querySelector('.cart-count').textContent = data.count;
-        });
-}
 
 // Close modal when clicking outside
 window.onclick = function(event) {
@@ -660,11 +396,22 @@ window.onclick = function(event) {
         closeModal();
     }
 }
+
+
+
+// Add to your customer.js
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-hide alerts after 3 seconds
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        }, 3000);
+    });
+});
+
 </script>
-
-
-
-
 
 
 </body>
