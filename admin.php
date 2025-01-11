@@ -167,8 +167,56 @@ $query = "SELECT pr.id, pr.product_name, pr.product_image, pr.status,pr.quantity
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - AgriBuzz</title>
+    <title>Admin Dashboard </title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Add Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
+
+/* Sidebar styling */
+.sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            padding-top: 20px;
+            background-color: #343a40;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        .nav-link {
+            color: #fff;
+            padding: 10px 20px;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover {
+            background-color: #495057;
+            color: #fff;
+        }
+
+        .nav-link i {
+            margin-right: 10px;
+        }
+
+        .active {
+            background-color: #0d6efd;
+        }
+
+
+
+
+
+
+
+
+
+
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
@@ -247,10 +295,56 @@ $query = "SELECT pr.id, pr.product_name, pr.product_image, pr.status,pr.quantity
     </style>
 </head>
 <body>
+
+
+ <!-- Sidebar -->
+ <div class="sidebar">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="admin.php">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="analytics/analytics.php">
+                    <i class="fas fa-chart-bar"></i> Analytics
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="manage_farmers.php">
+                    <i class="fas fa-users"></i> Manage Farmers
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="manage_customers.php">
+                    <i class="fas fa-user-friends"></i> Manage Customers
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="manage_orders.php">
+                    <i class="fas fa-shopping-cart"></i> Manage Orders
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="logout.php">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </li>
+        </ul>
+    </div>
+
+
     <header>
         <h1>Admin Dashboard - SmartAgri</h1>
         <a href="logout.php" class="button">Logout</a>
     </header>
+
+
+
+
+
+
+    
 
     <div class="container">
         <!-- Display Success/Error Messages -->
