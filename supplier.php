@@ -47,7 +47,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_supply'])) {
         try {
             $sql = "INSERT INTO supplies (supplier_id, supply_name, quantity, quantity_type, price, image) VALUES (?, ?, ?, ?, ?, ?)";
                         $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("isidss", $_SESSION['user_id'], $supply_name, $quantity, $quantity_type, $price, $image_path);
+                        $stmt->bind_param("isisss", $_SESSION['user_id'], $supply_name, $quantity, $quantity_type, $price, $image_path);
             if ($stmt->execute()) {
                 $success_message = "Supply added successfully!";
             } else {
@@ -252,6 +252,13 @@ try {
 
                 <label for="quantity">Quantity:</label>
                 <input type="number" name="quantity" required>
+
+                <label for="quantity_type">Quantity Type:</label>
+    <select name="quantity_type" required>
+        <option value="Per-Kg">Per-Kg</option>
+        <option value="Per-Piece">Per-Piece</option>
+    </select>
+
 
                 <label for="price">Price:</label>
                 <input type="text" name="price" required>
