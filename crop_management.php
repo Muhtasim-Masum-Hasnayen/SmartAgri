@@ -229,6 +229,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     </div>
 
 
+<!-- Farmer's Added Crops Section -->
+<h3 class="mt-5">My Crop List</h3>
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Crop Name</th>
+                    <th>Quantity </th>
+                    <th>Price </th>
+                   
+                   
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                // Fetch farmer's crops from farmers_crops table
+                $farmer_id = $_SESSION['user_id']; // Assuming you have farmer_id in session
+                $query = "SELECT fc.*,fc.id, fc.name,fc.image,fc.quantity,fc.quantity_type 
+                         FROM farmer_crops fc 
+                      
+                         WHERE fc.farmer_id = ?
+                         ORDER BY fc.id DESC";
+                
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param("i", $farmer_id);
+                $stmt->execute();
+                $result = $stmt->get_result();
+
+                if ($result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($row['id']); ?></td>
+                            <td><?php echo htmlspecialchars($row['name']); ?></td>
+                           
+                            <td><?php echo htmlspecialchars($row['quantity']) . ' ' . htmlspecialchars($row['quantity_type']); ?></td>
+                            <td>taka:<?php echo htmlspecialchars($row['price']); ?></td>
+                            
+                            
+  
+                        </tr>
+                        <?php
+                    }
+                } else {
+                    ?>
+                    <tr>
+                        <td colspan="7" class="text-center">No crops added yet</td>
+                    </tr>
+                    <?php
+                }
+                ?>
+            </tbody>
+        </table>
+    </div>
+
+
+
+
+
     
 <!-- Add Product Modal -->
 <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
