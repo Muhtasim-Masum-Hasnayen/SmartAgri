@@ -152,9 +152,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <select name="role" required>
                 <option value="farmer" selected>Farmer</option>
                 <option value="supplier">Supplier</option>
-                <option value="investor">Investor</option>
-                <option value="Labour">Labour</option>
-                <option value="customer">customer</option>
+                <option value="customer">Customer</option>
             </select>
         </div>
         
