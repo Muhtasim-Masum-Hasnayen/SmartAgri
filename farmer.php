@@ -99,6 +99,7 @@ session_start();
         
     <h2>Navigation</h2>
     <a href="crop_management.php">Crop/Product Management</a>
+    <a href="Buy.php">Buy from Suppliers</a>
     <a href="addNewProduct.php">Add New Product</a>
     <a href="farmer/order_management.php">Order Management</a>
     <a href="farmer/inventory_management.php">Inventory Management</a>
