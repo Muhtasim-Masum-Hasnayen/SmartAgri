@@ -12,6 +12,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Supplier') {
 $error = '';
 $success_message = '';
 
+// Initialize filter variables
+$price_min = $_GET['price_min'] ?? 0;
+$price_max = $_GET['price_max'] ?? 1000;
+$quantity_type = $_GET['quantity_type'] ?? '';
+
 // Handle adding new supply
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_supply'])) {
     $supply_name = $_POST['supply_name'];
@@ -46,8 +51,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_supply'])) {
     if (empty($error)) {
         try {
             $sql = "INSERT INTO supplies (supplier_id, supply_name, quantity, quantity_type, price, image) VALUES (?, ?, ?, ?, ?, ?)";
-                        $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("isisss", $_SESSION['user_id'], $supply_name, $quantity, $quantity_type, $price, $image_path);
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("isidss", $_SESSION['user_id'], $supply_name, $quantity, $quantity_type, $price, $image_path);
             if ($stmt->execute()) {
                 $success_message = "Supply added successfully!";
             } else {
@@ -119,15 +124,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['edit_supply'])) {
     }
 }
 
-
-// Fetch supplies for the logged-in supplier
+// Fetch supplies for the logged-in supplier with filtering
 $supplier_id = $_SESSION['user_id'];
 try {
-    $sql = "SELECT * FROM supplies WHERE supplier_id = ?";
+    $sql = "
+    SELECT *
+    FROM supplies
+    WHERE supplier_id = ?
+    AND price BETWEEN ? AND ?
+    AND (quantity_type = ? OR ? = '')";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $supplier_id);
+    $stmt->bind_param("iiiss", $supplier_id, $price_min, $price_max, $quantity_type, $quantity_type);
     $stmt->execute();
     $supplies_result = $stmt->get_result();
+
+    // Subquery to fetch the most expensive supply
+    $sql_most_expensive = "
+    SELECT supply_name, price
+    FROM supplies
+    WHERE supplier_id = ?
+    AND price = (SELECT MAX(price) FROM supplies WHERE supplier_id = ?)";
+    $stmt_expensive = $conn->prepare($sql_most_expensive);
+    $stmt_expensive->bind_param("ii", $supplier_id, $supplier_id);
+    $stmt_expensive->execute();
+    $expensive_result = $stmt_expensive->get_result();
+    $most_expensive = $expensive_result->fetch_assoc();
 } catch (Exception $e) {
     $error = "Error fetching supplies: " . $e->getMessage();
 }
@@ -140,94 +161,92 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supplier Dashboard - AgriBuzz</title>
     <style>
-            <style>
-                body {
-                    font-family: 'Arial', sans-serif;
-                    margin: 0;
-                    padding: 0;
-                    background: #f7f8fc;
-                    color: #333;
-                }
-                .container {
-                    width: 90%;
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    padding: 20px;
-                }
-                header {
-                    background: #5cb85c;
-                    color: white;
-                    padding: 10px 20px;
-                    text-align: center;
-                    border-bottom: 2px solid #4cae4c;
-                }
-                header h1 {
-                    margin: 0;
-                }
-                header a {
-                    color: white;
-                    text-decoration: none;
-                    font-size: 14px;
-                    margin-left: 15px;
-                }
-                .form-container, .table-container {
-                    background: white;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                    margin: 20px 0;
-                    padding: 20px;
-                }
-                .form-container h2, .table-container h2 {
-                    margin-top: 0;
-                    font-size: 20px;
-                    color: #5cb85c;
-                }
-                form label {
-                    display: block;
-                    margin: 10px 0 5px;
-                }
-                form input[type="text"], form input[type="number"] {
-                    width: 100%;
-                    padding: 8px;
-                    margin-bottom: 15px;
-                    border: 1px solid #ddd;
-                    border-radius: 4px;
-                }
-                form input[type="submit"] {
-                    background: #5cb85c;
-                    color: white;
-                    border: none;
-                    padding: 10px 15px;
-                    cursor: pointer;
-                    border-radius: 4px;
-                }
-                form input[type="submit"]:hover {
-                    background: #4cae4c;
-                }
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-top: 15px;
-                }
-                table thead th {
-                    background: #5cb85c;
-                    color: white;
-                    text-align: left;
-                    padding: 10px;
-                }
-                table tbody td {
-                    border: 1px solid #ddd;
-                    padding: 10px;
-                }
-                .success {
-                    color: green;
-                    font-weight: bold;
-                }
-                .error {
-                    color: red;
-                    font-weight: bold;
-                }
-            </style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f7f8fc;
+            color: #333;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background: #5cb85c;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            border-bottom: 2px solid #4cae4c;
+        }
+        header h1 {
+            margin: 0;
+        }
+        header a {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            margin-left: 15px;
+        }
+        .form-container, .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+            padding: 20px;
+        }
+        .form-container h2, .table-container h2 {
+            margin-top: 0;
+            font-size: 20px;
+            color: #5cb85c;
+        }
+        form label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        form input[type="text"], form input[type="number"], form select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        form input[type="submit"] {
+            background: #5cb85c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        form input[type="submit"]:hover {
+            background: #4cae4c;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        table thead th {
+            background: #5cb85c;
+            color: white;
+            text-align: left;
+            padding: 10px;
+        }
+        table tbody td {
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -237,6 +256,27 @@ try {
     </header>
 
     <div class="container">
+        <!-- Filter Form -->
+        <div class="form-container">
+            <h2>Filter Supplies</h2>
+            <form method="GET" action="supplier.php">
+                <label for="price_min">Min Price:</label>
+                <input type="number" name="price_min" value="<?= htmlspecialchars($price_min); ?>">
+
+                <label for="price_max">Max Price:</label>
+                <input type="number" name="price_max" value="<?= htmlspecialchars($price_max); ?>">
+
+                <label for="quantity_type">Quantity Type:</label>
+                <select name="quantity_type">
+                    <option value="">All</option>
+                    <option value="Per-Kg" <?= $quantity_type === 'Per-Kg' ? 'selected' : ''; ?>>Per-Kg</option>
+                    <option value="Per-Piece" <?= $quantity_type === 'Per-Piece' ? 'selected' : ''; ?>>Per-Piece</option>
+                </select>
+
+                <input type="submit" value="Filter">
+            </form>
+        </div>
+
         <!-- Add New Supply Form -->
         <div class="form-container">
             <h2>Add New Supply</h2>
@@ -253,13 +293,6 @@ try {
                 <label for="quantity">Quantity:</label>
                 <input type="number" name="quantity" required>
 
-                <label for="quantity_type">Quantity Type:</label>
-    <select name="quantity_type" required>
-        <option value="Per-Kg">Per-Kg</option>
-        <option value="Per-Piece">Per-Piece</option>
-    </select>
-
-
                 <label for="price">Price:</label>
                 <input type="text" name="price" required>
 
@@ -268,6 +301,17 @@ try {
 
                 <input type="submit" name="add_supply" value="Add Supply">
             </form>
+        </div>
+
+        <!-- Most Expensive Supply -->
+        <div class="table-container">
+            <h2>Most Expensive Supply</h2>
+            <?php if ($most_expensive): ?>
+                <p><strong>Supply Name:</strong> <?= htmlspecialchars($most_expensive['supply_name']); ?></p>
+                <p><strong>Price:</strong> <?= htmlspecialchars($most_expensive['price']); ?></p>
+            <?php else: ?>
+                <p>No supplies found.</p>
+            <?php endif; ?>
         </div>
 
         <!-- Supplies Table -->
@@ -301,7 +345,6 @@ try {
                                 <?php endif; ?>
                             </td>
                             <td>
-
                                <!-- Edit Form -->
                                <form method="POST" action="supplier.php" enctype="multipart/form-data" style="display: inline-block;">
                                    <input type="hidden" name="supply_id" value="<?= $supply['supply_id']; ?>">
@@ -338,7 +381,6 @@ try {
                                    <!-- Save Button -->
                                    <input type="submit" name="edit_supply" value="Save">
                                </form>
-
 
                                 <!-- Delete Form -->
                                 <form method="POST" action="supplier.php" style="display: inline-block;">
