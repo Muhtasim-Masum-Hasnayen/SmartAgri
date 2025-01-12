@@ -482,4 +482,3 @@ Array.from(quantityTypeLabels).forEach((label, index) => {
 </script>
 </body>
 </html>
-

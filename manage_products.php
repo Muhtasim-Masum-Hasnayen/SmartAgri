@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_product'])) {
             $stmt->execute();
 
             // Redirect to refresh page
-            header('Location: admin.php');
+            header('Location: manage_products.php');
             exit();
         } else {
             $error = "Error uploading the image to the server.";
@@ -69,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_product'])) {
 
 // Handle Update Product
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_product'])) {
+    $product_id = $_POST['product_id']; // Retrieve the product_id from the form
     $product_name = htmlspecialchars($_POST['product_name']);
     $quantity_type = htmlspecialchars($_POST['quantity_type']);
     $image_path = $product_image; // Keep current image by default
@@ -77,21 +78,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_product'])) {
     if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
         $image_tmp = $_FILES['product_image']['tmp_name'];
         $image_name = basename($_FILES['product_image']['name']);
-        $image_path = $image_name;
+        $image_path = 'uploads/' . $image_name;
 
-        // Move uploaded image to 'uploads/' folder
-        if (move_uploaded_file($image_tmp, 'uploads/' . $image_path)) {
-            // Update product in database
+        // Ensure 'uploads/' directory exists
+        if (!is_dir('uploads')) {
+            mkdir('uploads', 0777, true);
+        }
+
+        if (move_uploaded_file($image_tmp, $image_path)) {
+            // Update product with new image
             $sql = "UPDATE products SET name = ?, image = ?, quantity_type = ? WHERE id = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("sssi", $product_name, $image_path, $quantity_type, $product_id);
             $stmt->execute();
 
             // Redirect to refresh page
-            header('Location: admin.php');
+            header('Location: manage_products.php');
             exit();
         } else {
-            $error = "Error uploading image.";
+            $error = "Error uploading the image.";
         }
     } else {
         // No image upload, just update name and quantity type
@@ -101,10 +106,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_product'])) {
         $stmt->execute();
 
         // Redirect to refresh page
-//             header('Location: admin.php');
-//             exit();
+        header('Location: manage_products.php');
+        exit();
     }
 }
+
 
 // Handle product deletion
 if (isset($_GET['delete_product']) && is_numeric($_GET['delete_product'])) {
@@ -122,35 +128,11 @@ if (isset($_GET['delete_product']) && is_numeric($_GET['delete_product'])) {
         exit();
     } else {
         // Redirect with error message
-        header('Location: admin.php?error=Failed to delete product.');
+        header('Location: manage_products.php?error=Failed to delete product.');
         exit();
     }
 }
 
-
-
-
-
-// Handle user deletion
-if (isset($_GET['delete_user']) && is_numeric($_GET['delete_user'])) {
-    $user_id = $_GET['delete_user'];
-
-    // Prepare the DELETE query
-    $sql = "DELETE FROM users WHERE user_id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $user_id);
-
-    // Execute the query
-    if ($stmt->execute()) {
-        // Redirect with success message
-        header('Location: admin.php?success=User deleted successfully.');
-        exit();
-    } else {
-        // Redirect with error message
-        header('Location: admin.php?error=Failed to delete user.');
-        exit();
-    }
-}
 
 // Fetch product requests
 $query = "SELECT pr.id, pr.product_name, pr.product_image, pr.status,pr.quantity_type, f.name AS farmer_name
@@ -432,7 +414,7 @@ form input[type="submit"]:hover {
 
 
     <header>
-        <h1>Admin Dashboard - SmartAgri</h1>
+        <h1>Manage Products - SmartAgri</h1>
         <a href="logout.php" class="button">Logout</a>
     </header>
 
@@ -453,55 +435,142 @@ form input[type="submit"]:hover {
 
 
 
-        <!-- Manage Users -->
-        <div class="section">
-            <h2>Manage Users</h2>
 
-            <?php
-            // Fetch grouped users by role and limit to last 15 users
-            $query = "
-                SELECT *
-                FROM users
-                ORDER BY role, created_at DESC
-                LIMIT 15
-            ";
-            $users_result = $conn->query($query);
+<h2 class="mt-4">Product Requests</h2>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Product Name</th>
+            <th>Image</th>
+            <th>Farmer Name</th>
+            <th>Quantity Type</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php if ($result->num_rows > 0): ?>
+            <?php while ($row = $result->fetch_assoc()): ?>
+                <tr>
+                    <td><?php echo $row['id']; ?></td>
+                    <td><?php echo htmlspecialchars($row['product_name']); ?></td>
+                    <td>
+                        <img src="<?php echo htmlspecialchars($row['product_image']); ?>" alt="Product Image" width="100">
+                    </td>
+                    <td><?php echo htmlspecialchars($row['farmer_name']); ?></td>
+                    <td><?php echo htmlspecialchars($row['quantity_type']); ?></td>
 
-            // Group users by role
-            $users_by_role = [];
-            while ($user = $users_result->fetch_assoc()) {
-                $users_by_role[$user['role']][] = $user;
-            }
-            ?>
+                    <td><span class="badge bg-warning"><?php echo htmlspecialchars($row['status']); ?></span></td>
+                    <td>
+                        <form method="POST" action="process_request.php" style="display:inline;">
+                            <input type="hidden" name="request_id" value="<?php echo $row['id']; ?>">
+                            <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">Approve</button>
+                            <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endwhile; ?>
+        <?php else: ?>
+            <tr>
+                <td colspan="6" class="text-center">No pending requests</td>
+            </tr>
+        <?php endif; ?>
+    </tbody>
+</table>
 
-            <?php foreach ($users_by_role as $role => $users): ?>
-                <h3><?= htmlspecialchars(ucfirst($role)); ?> Users</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>User ID</th>
-                            <th>Username</th>
-                            <th>Email</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($users as $user): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($user['user_id']); ?></td>
-                                <td><?= htmlspecialchars($user['name']); ?></td>
-                                <td><?= htmlspecialchars($user['email']); ?></td>
-                                <td>
-                                    <!-- Delete User -->
-                                    <a href="admin.php?delete_user=<?= $user['user_id']; ?>" class="button" style="background: #d9534f;">Delete</a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php endforeach; ?>
-        </div>
 
+
+
+
+<!-- Manage Products -->
+<div class="section">
+    <h2>Manage Products</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Product ID</th>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Quantity Type</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while ($product = $products_result->fetch_assoc()): ?>
+                <tr>
+                    <td><?= htmlspecialchars($product['id']); ?></td>
+                    <td>
+                        <!-- Display Product Image -->
+                        <img src="<?= htmlspecialchars($product['image']); ?>" alt="<?= htmlspecialchars($product['name']); ?>" width="100" height="100">
+                    </td>
+                    <td><?= htmlspecialchars($product['name']); ?></td>
+                    <td>
+                        <!-- Display Quantity Type (per-piece or per-kg) -->
+                        <?= htmlspecialchars($product['quantity_type']); ?>
+                    </td>
+                    <td>
+                        <!-- Edit Product -->
+                        <a href="manage_products.php?edit_product=<?= $product['id']; ?>" class="button">Edit</a>
+                        <!-- Delete Product -->
+                        <a href="manage_products.php?delete_product=<?= $product['id']; ?>" class="button" style="background: #d9534f;">Delete</a>
+                    </td>
+                </tr>
+            <?php endwhile; ?>
+        </tbody>
+    </table>
+
+    <!-- Add or Edit Product Form -->
+<form method="POST" enctype="multipart/form-data" style="margin-top: 20px;">
+    <h3><?= isset($_GET['edit_product']) ? 'Edit Product' : 'Add New Product'; ?></h3>
+
+    <?php if (isset($error)): ?>
+        <p class="error" style="color: red;"><?= htmlspecialchars($error); ?></p>
+    <?php endif; ?>
+
+    <?php
+    $product_name = '';
+    $product_image = '';
+    $quantity_type = 'Per-KG'; // Default value
+
+    if (isset($_GET['edit_product'])) {
+        $product_id = (int)$_GET['edit_product']; // Typecast to int for security
+        $result = $conn->query("SELECT * FROM products WHERE id = $product_id");
+
+        if ($result && $result->num_rows > 0) {
+            $product = $result->fetch_assoc();
+            $product_name = htmlspecialchars($product['name']);
+            $product_image = htmlspecialchars($product['image']);
+            $quantity_type = htmlspecialchars($product['quantity_type']);
+        } else {
+            $error = "Product not found or invalid ID.";
+        }
+    }
+    ?>
+
+    <label for="product_name">Name:</label>
+    <input type="text" id="product_name" name="product_name" value="<?= $product_name; ?>" required>
+
+    <label for="product_image">Upload Picture (optional):</label>
+    <input type="file" id="product_image" name="product_image" accept="image/*">
+    <?php if ($product_image): ?>
+        <p>Current Image: <img src="<?= htmlspecialchars($product_image); ?>" alt="Product Image" style="max-width: 100px; max-height: 100px;"></p>
+    <?php endif; ?>
+
+    <label for="quantity_type">Quantity Type:</label>
+    <select id="quantity_type" name="quantity_type">
+        <option value="Per-KG" <?= $quantity_type === 'Per-KG' ? 'selected' : ''; ?>>Per KG</option>
+        <option value="Per-Piece" <?= $quantity_type === 'Per-Piece' ? 'selected' : ''; ?>>Per Piece</option>
+    </select>
+
+    <button type="submit" name="<?= isset($_GET['edit_product']) ? 'update_product' : 'add_product'; ?>" class="button"style="background: #00ff00;">
+        <?= isset($_GET['edit_product']) ? 'Update Product' : 'Add Product'; ?>
+    </button>
+
+    <?php if (isset($_GET['edit_product'])): ?>
+        <a href="manage_products.php" class="button" style="background: #ff0000;">Cancel</a>
+    <?php endif; ?>
+</form>
 
 
 

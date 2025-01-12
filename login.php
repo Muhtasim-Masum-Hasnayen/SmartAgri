@@ -61,20 +61,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <style>
     body {
         font-family: Arial, sans-serif;
-        background-image: url('farmland-conversion.jpg'); /* Path to your image */
-        background-size: cover; /* Cover the screen with the background image */
-        background-position: center; /* Center the image */
-        background-repeat: no-repeat; /* Prevent tiling */
+        background: linear-gradient(to bottom right, #e3f2fd, #c8e6c9); /* Professional gradient background */
         padding: 100px;
+        margin: 0;
     }
-    
+
     .form-container {
-        max-width: 300px;
+        max-width: 400px;
         margin: auto;
-        background: rgba(255, 255, 255, 0.9); /* Adds a white background with slight transparency */
+        background: rgba(255, 255, 255, 0.95); /* Adds a white background with slight transparency */
         padding: 30px;
-        border-radius: 3px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    .form-container h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #4caf50;
     }
     .form-group {
         margin-bottom: 15px;
@@ -82,32 +85,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     .form-group label {
         display: block;
         margin-bottom: 5px;
+        font-weight: bold;
+        color: #333;
     }
     .form-group input {
         width: 100%;
         padding: 10px;
         border: 1px solid #ccc;
-        border-radius: 4px;
+        border-radius: 5px;
     }
     .form-group input[type="submit"] {
-        background-color: #5cb85c;
+        background-color: #4caf50;
         color: white;
         border: none;
         cursor: pointer;
+        transition: background-color 0.3s;
     }
     .form-group input[type="submit"]:hover {
-        background-color: #4cae4c;
+        background-color: #45a049;
     }
     .error {
         color: red;
         margin-bottom: 15px;
+        text-align: center;
     }
     .register-link {
         margin-top: 15px;
         text-align: center;
     }
     .register-link a {
-        color: #5cb85c;
+        color: #4caf50;
         text-decoration: none;
     }
     .register-link a:hover {
@@ -118,13 +125,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         margin-top: 20px;
     }
     .back-link a {
-        color: #5cb85c;
+        color: #4caf50;
         text-decoration: none;
     }
     .back-link a:hover {
         text-decoration: underline;
     }
-</style>
+    </style>
 </head>
 <body>
 
@@ -138,21 +145,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <label for="phone_number">Phone Number:</label>
             <input type="text" name="phone_number" required>
         </div>
-        
+
         <div class="form-group">
             <label for="password">Password:</label>
             <input type="password" name="password" required>
         </div>
-        
+
         <div class="form-group">
             <input type="submit" value="Login">
         </div>
     </form>
-    
+
     <div class="register-link">
         <p>Don't have an account? <a href="register.php">Register here</a></p>
     </div>
-    
+
     <!-- Back to Dashboard Link -->
     <div class="back-link">
         <p><a href="dashboard.php">Back to Dashboard</a></p>

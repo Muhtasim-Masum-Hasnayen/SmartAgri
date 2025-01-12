@@ -152,7 +152,10 @@ function displayMessage()
                             <?php endif; ?>
                         </td>
                         <td><?= htmlspecialchars($row['supply_name']); ?></td>
-                        <td><?= htmlspecialchars($row['quantity'] . ' ' . $row['quantity_type']); ?></td>
+                        <td>
+                            <?= htmlspecialchars($row['quantity']) . ' ' . ($row['quantity_type'] == 'Per-Piece' ? 'Pieces' : ($row['quantity_type'] == 'Per-Kg' ? 'KG' : $row['quantity_type'])); ?>
+                        </td>
+
                         <td>TK.<?= htmlspecialchars($row['price']); ?></td>
                         <td>
                             <form method="POST" action="buy.php">
