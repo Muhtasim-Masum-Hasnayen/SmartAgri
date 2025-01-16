@@ -198,6 +198,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_quantity'])) {
     exit();
 }
 
+// Fetch search term from request
+$searchTerm = isset($_GET['search']) ? '%' . $_GET['search'] . '%' : '%';
+
+// Fetch available products with search filter
+$productStmt = $conn->prepare("
+    SELECT fc.*, fc.farmer_id, p.image as product_image
+    FROM farmer_crops fc
+    LEFT JOIN products p ON fc.product_id = p.id
+    WHERE fc.quantity > 0 AND fc.name LIKE ?
+");
+$productStmt->bind_param("s", $searchTerm);
+
+if (!$productStmt->execute()) {
+    throw new Exception("Error fetching products: " . $conn->error);
+}
+
+$products = $productStmt->get_result();
+
+
+
+// Fetch the customer's past orders including product images
+$orderHistoryStmt = $conn->prepare("
+    SELECT
+        o.order_id,
+        o.crop_name,
+        o.quantity,
+        o.total_amount,
+        o.status,
+        o.order_date,
+        fc.price,
+        fc.quantity_type,
+        fc.image
+    FROM orders o
+    LEFT JOIN farmer_crops fc ON o.product_id = fc.product_id
+    WHERE o.customer_id = ?
+    ORDER BY o.order_date DESC
+");
+$orderHistoryStmt->bind_param("i", $_SESSION['user_id']);
+$orderHistoryStmt->execute();
+$orderHistory = $orderHistoryStmt->get_result();
 
 
 
@@ -214,8 +254,346 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_quantity'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customer Dashboard - SmartAgri</title>
-    <link rel="stylesheet" href="css/customer.css">
-    <link rel="stylesheet" href="css/customer.css">
+
+    <style>
+    /* General Styles */
+    body {
+        font-family: 'Roboto', sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f9f9f9;
+        color: #333;
+    }
+
+    h1, h2 {
+        text-align: center;
+        color: #2c3e50;
+        margin: 0;
+        font-weight: 600;
+    }
+
+    /* Header Styles */
+    header {
+        background: linear-gradient(135deg, #5cb85c, #4cae4c);
+        color: white;
+        padding: 20px 15px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-bottom: 3px solid #3d8f3d;
+    }
+
+    header h1 {
+        margin: 0;
+        font-size: 2rem;
+    }
+
+    header a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 1rem;
+        margin-left: 20px;
+        transition: color 0.3s;
+    }
+
+    header a:hover {
+        color: #f1f1f1;
+    }
+
+    /* Forms */
+    form label {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 5px;
+        display: block;
+        color: #34495e;
+    }
+
+    form input, form select, .form-control {
+        width: 100%;
+        padding: 10px;
+        margin: 8px 0;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        box-sizing: border-box;
+        font-size: 1rem;
+        background-color: #fff;
+        transition: border-color 0.3s ease-in-out;
+    }
+
+    form input:focus, form select:focus, .form-control:focus {
+        border-color: #5cb85c;
+        outline: none;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #28a745, #218838);
+        color: #fff;
+        border: none;
+        padding: 12px 20px;
+        font-size: 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background 0.3s, transform 0.2s;
+        display: block;
+        width: 100%;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #218838, #1e7e34);
+        transform: translateY(-3px);
+    }
+
+    /* Alerts */
+    .alert {
+        padding: 15px;
+        margin: 20px auto;
+        border-radius: 8px;
+        max-width: 600px;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        animation: slideIn 0.5s ease-out;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    /* Cart Icon */
+    .cart-icon {
+        position: fixed;
+        top: 20px;
+        right: 30px;
+        background: linear-gradient(135deg, #5cb85c, #4cae4c);
+        color: white;
+        padding: 12px 25px;
+        border-radius: 50px;
+        font-size: 1rem;
+        cursor: pointer;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+        z-index: 1000;
+    }
+
+    .cart-icon:before {
+        content: '🛒';
+        font-size: 1.5em;
+    }
+
+    .cart-icon:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Product Grid */
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 25px;
+        padding: 20px;
+        max-width: 1200px;
+        margin: 20px auto;
+    }
+
+    .product-card {
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .product-card img {
+        max-width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .product-card h3 {
+        margin: 15px 0 5px;
+        font-size: 1.2rem;
+        color: #2c3e50;
+    }
+
+    .product-card p {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        margin: 5px 0;
+    }
+
+    .product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: #fff;
+        margin: 10% auto;
+        padding: 20px;
+        width: 90%;
+        max-width: 500px;
+        border-radius: 10px;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .modal-content h2 {
+        margin: 0 0 15px;
+        font-size: 1.5rem;
+        color: #34495e;
+    }
+
+    .close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #555;
+    }
+
+    /* Cart Sidebar */
+    .cart-sidebar {
+        position: fixed;
+        top: 0;
+        right: -500px;
+        width: 400px;
+        height: 70%;
+        background: #fff;
+        box-shadow: -4px 0 10px rgba(0, 0, 0, 0.1);
+        transition: right 0.4s ease;
+        z-index: 1000;
+        padding: 20px;
+    }
+
+    .cart-sidebar.active {
+        right: 0;
+    }
+
+    .cart-sidebar h2 {
+        margin: 0;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #5cb85c;
+        font-size: 1.5rem;
+        color: #2c3e50;
+    }
+
+    .cart-sidebar .cart-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 10px 0;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .cart-sidebar .cart-total {
+        font-size: 1.3rem;
+        text-align: right;
+        margin-top: 20px;
+        font-weight: bold;
+    }
+
+    .order-history {
+        max-width: 800px;
+        margin: 20px auto;
+        font-family: Arial, sans-serif;
+    }
+
+    .order-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+
+    .order-details {
+        max-width: 70%;
+    }
+
+    .order-item h4 {
+        margin: 0 0 10px;
+        font-size: 18px;
+        color: #333;
+    }
+
+    .order-item p {
+        margin: 5px 0;
+        color: #555;
+    }
+
+    .order-image {
+        max-width: 100px;
+        max-height: 100px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        object-fit: cover;
+        margin-left: 20px;
+    }
+
+
+    .search-bar {
+        margin: 20px 0;
+        text-align: center;
+    }
+
+    .search-input {
+        width: 300px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .search-button {
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .search-button:hover {
+        background-color: #45a049;
+    }
+
+    </style>
 
  
 </head>
@@ -233,6 +611,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_quantity'])) {
 <!-- Cart Icon -->
 <div class="cart-icon" onclick="toggleCart()">
     Cart <span class="cart-count"><?= count($_SESSION['cart'] ?? []) ?></span>
+</div>
+<div class="search-bar">
+    <form method="GET" action="customer.php">
+        <input
+            type="text"
+            name="search"
+            placeholder="Search for crops or products..."
+            value="<?= htmlspecialchars($_GET['search'] ?? '') ?>"
+            class="search-input"
+        >
+        <button type="submit" class="search-button">Search</button>
+    </form>
 </div>
 
 
@@ -307,6 +697,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_quantity'])) {
         <div id="productDetails"></div>
     </div>
 </div>
+
+
 
 
 <div class="product-grid">
@@ -412,6 +804,34 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
+
+
+<h2 id="orderHistory">Your Order History</h2>
+
+<?php if ($orderHistory->num_rows > 0): ?>
+    <div class="order-history">
+        <?php while ($order = $orderHistory->fetch_assoc()): ?>
+            <div class="order-item">
+                <div class="order-details">
+                    <h4><?= htmlspecialchars($order['crop_name']) ?></h4>
+                    <p>Quantity: <?= htmlspecialchars($order['quantity']) ?> <?= htmlspecialchars($order['quantity_type']) ?></p>
+                    <p>Total Amount: TK. <?= htmlspecialchars($order['total_amount']) ?></p>
+                    <p>Status: <?= htmlspecialchars(ucfirst($order['status'])) ?></p>
+                    <p>Order Date: <?= htmlspecialchars(date("d-M-Y H:i:s", strtotime($order['order_date']))) ?></p>
+                </div>
+                <img
+                    src="<?= htmlspecialchars($order['image']) ?>"
+                    alt="<?= htmlspecialchars($order['crop_name']) ?>"
+                    class="order-image"
+                >
+            </div>
+            <hr>
+        <?php endwhile; ?>
+    </div>
+<?php else: ?>
+    <p>You have not placed any orders yet.</p>
+<?php endif; ?>
+
 
 
 </body>
