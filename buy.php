@@ -2,104 +2,27 @@
 session_start();
 include 'database.php'; // Include database connection
 
-
-
-
-
-// Initialize cart if not exists
-if (!isset($_SESSION['cart'])) {
-    $_SESSION['cart'] = array();
+function validateQuantity($quantity) {
+    return filter_var($quantity, FILTER_VALIDATE_INT, ["options" => ["min_range" => 1]]);
 }
 
-// Function to get cart total
-function getCartTotal($conn) {
-    $total = 0;
-    if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
-        foreach ($_SESSION['cart'] as $item) {
-            $supply_id = $item['supply_id'];
-            $stmt = $conn->prepare("SELECT price FROM supplies WHERE supply_id = ?");
-            $stmt->bind_param("i", $supply_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            if ($row = $result->fetch_assoc()) {
-                $total += $row['price'] * $item['quantity'];
-            }
-        }
-    }
-    return $total;
+function fetchSupplyDetails($conn, $supply_id) {
+    $stmt = $conn->prepare("
+        SELECT supply_name, price, quantity AS available_quantity, supplier_id
+        FROM supplies WHERE supply_id = ?
+    ");
+    $stmt->bind_param("i", $supply_id);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_assoc();
 }
 
-
-
-
-
-// In your PHP cart operations, update the count immediately after each operation
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (isset($_POST['update_quantity'])) {
-        $supply_id = $_POST['supply_id'];
-        $new_quantity = $_POST['quantity'];
-        
-        if ($new_quantity > 0) {
-            $_SESSION['cart'][$supply_id]['quantity'] = $new_quantity;
-            echo "<script>updateCartCount(" . count($_SESSION['cart']) . ");</script>";
-        }
-    } elseif (isset($_POST['remove_item'])) {
-        $supply_id = $_POST['supply_id'];
-        unset($_SESSION['cart'][$supply_id]);
-        echo "<script>updateCartCount(" . count($_SESSION['cart']) . ");</script>";
-    } elseif (isset($_POST['confirm_order'])) {
-        $_SESSION['cart'] = [];
-        $_SESSION['success'] = "Order confirmed successfully!";
-        echo "<script>updateCartCount(0);</script>";
-    } elseif (isset($_POST['add_to_cart'])) {
-        // Your existing add to cart code...
-        echo "<script>updateCartCount(" . count($_SESSION['cart']) . ");</script>";
-    }
+function updateStock($conn, $supply_id, $quantity) {
+    $stmt = $conn->prepare("UPDATE supplies SET quantity = quantity - ? WHERE supply_id = ?");
+    $stmt->bind_param("ii", $quantity, $supply_id);
+    return $stmt->execute();
 }
 
-
-
-
-
-// Fetch all supplies
-try {
-    $sql = "SELECT supply_id, supply_name, quantity, quantity_type, price, image FROM supplies";
-    $result = $conn->query($sql);
-} catch (Exception $e) {
-    die("Error fetching supplies: " . $e->getMessage());
-}
-
-// Handle add to cart functionality
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_to_cart'])) {
-    $supply_id = $_POST['supply_id'];
-    $quantity = $_POST['quantity'];
-
-    // Validate quantity
-    if ($quantity <= 0) {
-        $_SESSION['error'] = "Quantity must be greater than 0.";
-    } else {
-        // Add item to cart in session
-        if (!isset($_SESSION['cart'])) {
-            $_SESSION['cart'] = [];
-        }
-
-        // Check if item already exists in the cart
-        if (isset($_SESSION['cart'][$supply_id])) {
-            $_SESSION['cart'][$supply_id]['quantity'] += $quantity;
-        } else {
-            $_SESSION['cart'][$supply_id] = [
-                'supply_id' => $supply_id,
-                'quantity' => $quantity
-            ];
-        }
-
-        $_SESSION['success'] = "Item added to cart successfully!";
-    }
-}
-
-// Display messages
-function displayMessage()
-{
+function displayMessage() {
     if (!empty($_SESSION['success'])) {
         echo "<div class='success'>" . htmlspecialchars($_SESSION['success']) . "</div>";
         unset($_SESSION['success']);
@@ -110,6 +33,141 @@ function displayMessage()
     }
 }
 
+function getCartTotal($cart) {
+    $total = 0;
+    foreach ($cart as $item) {
+        $total += $item['subtotal'];
+    }
+    return $total;
+}
+
+function logError($message) {
+    error_log($message);
+    $_SESSION['error'] = "An unexpected error occurred.";
+}
+
+// Handle Cart Actions
+function handleCartActions($conn) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (isset($_POST['add_to_cart'])) {
+            $supply_id = $_POST['supply_id'];
+            $quantity = validateQuantity($_POST['quantity']);
+
+            if (!$quantity) {
+                $_SESSION['error'] = "Invalid quantity.";
+                return;
+            }
+
+            $product = fetchSupplyDetails($conn, $supply_id);
+            if ($product && $quantity <= $product['available_quantity']) {
+                if (!isset($_SESSION['cart'])) {
+                    $_SESSION['cart'] = [];
+                }
+
+                $_SESSION['cart'][$supply_id] = [
+                    'supply_id' => $supply_id,
+                    'supply_name' => $product['supply_name'],
+                    'quantity' => $quantity,
+                    'price' => $product['price'],
+                    'supplier_id' => $product['supplier_id'],
+                    'subtotal' => $quantity * $product['price']
+                ];
+
+                $_SESSION['success'] = "Item added to cart successfully!";
+            } else {
+                $_SESSION['error'] = "Product not available or insufficient stock.";
+            }
+        }
+
+        if (isset($_POST['update_quantity'])) {
+            $supply_id = $_POST['supply_id'];
+            $quantity = validateQuantity($_POST['quantity']);
+            if ($quantity && isset($_SESSION['cart'][$supply_id])) {
+                $_SESSION['cart'][$supply_id]['quantity'] = $quantity;
+                $_SESSION['cart'][$supply_id]['subtotal'] = $quantity * $_SESSION['cart'][$supply_id]['price'];
+                $_SESSION['success'] = "Quantity updated.";
+            } else {
+                $_SESSION['error'] = "Invalid quantity.";
+            }
+        }
+
+        if (isset($_POST['remove_item'])) {
+            $supply_id = $_POST['supply_id'];
+            unset($_SESSION['cart'][$supply_id]);
+            $_SESSION['success'] = "Item removed from cart.";
+        }
+    }
+}
+
+handleCartActions($conn);
+
+// Confirm Order
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_order'])) {
+    $farmer_id = $_SESSION['user_id'];
+
+    if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
+        $_SESSION['error'] = "Your cart is empty.";
+        return;
+    }
+
+   
+        $conn->begin_transaction();
+
+foreach ($_SESSION['cart'] as $item) {
+    $total_price = $item['price'] * $item['quantity'];
+    $sale_date = date("Y-m-d H:i:s"); // Get the current timestamp
+    $status = 'Pending'; // You can customize this value based on your logic
+
+
+
+
+
+    $stmt = $conn->prepare("
+        INSERT INTO supplier_sales (supplier_id, farmer_id, product_id, quantity, price, total_price, sale_date, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+
+    if (!$stmt) {
+        error_log("Prepare failed: " . $conn->error);
+        echo "Prepare failed: " . $conn->error;
+        $conn->rollback();
+        exit;
+    }
+
+    $stmt->bind_param(
+        "iidddsss",
+        $item['supplier_id'],  // Supplier ID
+        $farmer_id,           // Farmer ID
+        $item['supply_id'],   // Product ID (adjust the name if necessary)
+        $item['quantity'],    // Quantity
+        $item['price'],       // Unit price
+        $total_price,         // Total price
+        $sale_date,           // Sale date (current timestamp)
+        $status               // Sale status
+    );
+
+    if (!$stmt->execute()) {
+        error_log("Execute failed: " . $stmt->error);
+        echo "Execute failed: " . $stmt->error;
+        $conn->rollback();
+        exit;
+    }
+}
+
+$conn->commit();
+        $_SESSION['cart'] = [];
+        $_SESSION['success'] = "Order confirmed successfully!";
+   
+}
+
+// Fetch Supplies
+try {
+    $stmt = $conn->prepare("SELECT supply_id, supplier_id, supply_name, quantity, quantity_type, price, image FROM supplies");
+    $stmt->execute();
+    $result = $stmt->get_result();
+} catch (Exception $e) {
+    die("Error fetching supplies: " . $e->getMessage());
+}
 ?>
 
 <!DOCTYPE html>
@@ -117,147 +175,85 @@ function displayMessage()
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buy Supplies - AgriSmart</title>
-
+    <title>Buy Supplies - AgriBuzz</title>
     <link rel="stylesheet" type="text/css" href="css/buy.css">
-
-   
 </head>
 <body>
-    <header>
-        <h1>Buy Supplies - AgriBuzz</h1>
-    </header>
+<header>
+    <h1>Buy Supplies - AgriBuzz</h1>
+</header>
 
-    <div class="container">
-        <?php displayMessage(); ?>
-
-        <table>
-            <thead>
+<div class="container">
+    <?php displayMessage(); ?>
+    <table>
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Supply Name</th>
+                <th>Quantity Available</th>
+                <th>Price</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while ($row = $result->fetch_assoc()): ?>
                 <tr>
-                    <th>Image</th>
-                    <th>Supply Name</th>
-                    <th>Quantity Available</th>
-                    <th>Price</th>
-                    <th>Action</th>
+                    <td>
+                        <?php if (!empty($row['image'])): ?>
+                            <img src="<?= htmlspecialchars($row['image']); ?>" alt="Supply Image">
+                        <?php else: ?>
+                            No Image
+                        <?php endif; ?>
+                    </td>
+                    <td><?= htmlspecialchars($row['supply_name']); ?></td>
+                    <td><?= htmlspecialchars($row['quantity']) . ' ' . htmlspecialchars($row['quantity_type']); ?></td>
+                    <td>TK.<?= htmlspecialchars($row['price']); ?></td>
+                    <td>
+                        <form method="POST" action="buy.php">
+                            <input type="hidden" name="supply_id" value="<?= htmlspecialchars($row['supply_id']); ?>">
+                            <input type="hidden" name="supplier_id" value="<?= htmlspecialchars($row['supplier_id']); ?>">
+                            <input type="number" name="quantity" min="1" required>
+                            <input type="hidden" name="price" value="<?= htmlspecialchars($row['price']); ?>">
+                            <input type="submit" name="add_to_cart" value="Add to Cart">
+                        </form>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                <?php while ($row = $result->fetch_assoc()): ?>
-                    <tr>
-                        <td>
-                            <?php if (!empty($row['image'])): ?>
-                                <img src="<?= htmlspecialchars($row['image']); ?>" alt="Supply Image">
-                            <?php else: ?>
-                                No Image
-                            <?php endif; ?>
-                        </td>
-                        <td><?= htmlspecialchars($row['supply_name']); ?></td>
-                        <td>
-                            <?= htmlspecialchars($row['quantity']) . ' ' . ($row['quantity_type'] == 'Per-Piece' ? 'Pieces' : ($row['quantity_type'] == 'Per-Kg' ? 'KG' : $row['quantity_type'])); ?>
-                        </td>
+            <?php endwhile; ?>
+        </tbody>
+    </table>
+</div>
 
-                        <td>TK.<?= htmlspecialchars($row['price']); ?></td>
-                        <td>
-                            <form method="POST" action="buy.php">
-                                <input type="hidden" name="supply_id" value="<?= htmlspecialchars($row['supply_id']); ?>">
-                                <input type="number" name="quantity" min="1" placeholder="Qty" required>
-                                <input type="submit" name="add_to_cart" value="Add to Cart">
-                            </form>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
-    </div>
+<button class="cart-button" onclick="toggleCart()">🛒 Cart <span class="cart-count"><?= isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0; ?></span></button>
 
-
-<!-- Cart Button -->
-<button class="cart-button" onclick="toggleCart()">
-    🛒 Cart 
-    <span class="cart-count">
-        <?php echo isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0; ?>
-    </span>
-</button>
-
-<!-- Cart Container -->
 <div class="cart-container" id="cartContainer">
     <button class="close-cart" onclick="toggleCart()">×</button>
     <h2>Shopping Cart</h2>
     <?php if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])): ?>
-        <?php foreach ($_SESSION['cart'] as $supply_id => $item): 
-            $stmt = $conn->prepare("SELECT supply_name, price FROM supplies WHERE supply_id = ?");
-            $stmt->bind_param("i", $supply_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $supply = $result->fetch_assoc();
-        ?>
+        <?php foreach ($_SESSION['cart'] as $item): ?>
             <div class="cart-item">
-                <h4><?= htmlspecialchars($supply['supply_name']) ?></h4>
-                <p>Price: $<?= htmlspecialchars($supply['price']) ?></p>
-                <div class="cart-controls">
-                    <form method="POST" style="display: inline;">
-                        <input type="hidden" name="supply_id" value="<?= $supply_id ?>">
-                        <input type="number" name="quantity" value="<?= $item['quantity'] ?>" min="1" style="width: 60px;">
-                        <input type="submit" name="update_quantity" value="Update" class="btn">
-                    </form>
-                    <form method="POST" style="display: inline;">
-                        <input type="hidden" name="supply_id" value="<?= $supply_id ?>">
-                        <input type="submit" name="remove_item" value="Remove" class="remove-item">
-                    </form>
-                </div>
+                <h4><?= htmlspecialchars($item['supply_name']); ?></h4>
+                <p>Price: TK.<?= htmlspecialchars($item['price']); ?></p>
+                <form method="POST">
+                    <input type="hidden" name="supply_id" value="<?= $item['supply_id']; ?>">
+                    <input type="number" name="quantity" value="<?= $item['quantity']; ?>" min="1">
+                    <input type="submit" name="update_quantity" value="Update">
+                    <input type="submit" name="remove_item" value="Remove">
+                </form>
             </div>
         <?php endforeach; ?>
-        
-        <div class="cart-total">
-            Total: Tk.<?= number_format(getCartTotal($conn), 2) ?>
-        </div>
-        
+        <div class="cart-total">Total: TK.<?= number_format(getCartTotal($_SESSION['cart']), 2); ?></div>
         <form method="POST">
-            <input type="submit" name="confirm_order" value="Confirm Order" class="confirm-order">
+            <input type="submit" name="confirm_order" value="Confirm Order">
         </form>
     <?php else: ?>
-        <p>Your cart is empty</p>
+        <p>Your cart is empty.</p>
     <?php endif; ?>
 </div>
 
-
-
-
-<!-- Add this JavaScript at the bottom of your file -->
 <script>
 function toggleCart() {
-    const cartContainer = document.getElementById('cartContainer');
-    cartContainer.classList.toggle('active');
-}
-
-// Close cart when clicking outside
-document.addEventListener('click', function(event) {
-    const cartContainer = document.getElementById('cartContainer');
-    const cartButton = document.querySelector('.cart-button');
-    
-    if (!cartContainer.contains(event.target) && 
-        !cartButton.contains(event.target) && 
-        cartContainer.classList.contains('active')) {
-        cartContainer.classList.remove('active');
-    }
-});
-
-// Prevent closing when clicking inside cart
-document.querySelector('.cart-container').addEventListener('click', function(event) {
-    event.stopPropagation();
-});
-
-// Update cart count directly
-function updateCartCount(count) {
-    const cartCount = document.getElementById('cartCount');
-    cartCount.textContent = count;
+    document.getElementById('cartContainer').classList.toggle('active');
 }
 </script>
-
-
-
-
-
-
 </body>
 </html>

@@ -173,3 +173,26 @@ padding: 5px 10px;
 cursor: pointer;
 border-radius: 4px;
 }
+
+cart-icon {
+    position: relative;
+    display: inline-block;
+}
+
+.cart-icon.has-items::after {
+    content: attr(data-count);
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #ff4444;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 12px;
+    min-width: 20px;
+    text-align: center;
+}
+
+#cart-count {
+    margin-left: 5px;
+}
