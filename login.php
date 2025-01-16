@@ -69,16 +69,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     .form-container {
         max-width: 400px;
         margin: auto;
-        background: rgba(255, 255, 255, 0.95); /* Adds a white background with slight transparency */
+        background: linear-gradient(to right, #4caf50, #8bc34a); /* Initial gradient */
         padding: 30px;
         border-radius: 10px;
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        animation: bounceAnimation 1s ease-in-out infinite, gradientAnimation 5s ease infinite; /* Apply both animations */
     }
+
+    /* Bounce animation */
+    @keyframes bounceAnimation {
+        0% {
+            transform: translateY(0);
+        }
+        20% {
+            transform: translateY(-10px);
+        }
+        40% {
+            transform: translateY(0);
+        }
+        60% {
+            transform: translateY(-5px);
+        }
+        80% {
+            transform: translateY(0);
+        }
+        100% {
+            transform: translateY(0);
+        }
+    }
+
+
+    }
+
     .form-container h2 {
         text-align: center;
         margin-bottom: 20px;
-        color: #4caf50;
+        color: white; /* Text color to contrast with the gradient */
     }
+
     .form-group {
         margin-bottom: 15px;
     }
@@ -86,20 +114,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         display: block;
         margin-bottom: 5px;
         font-weight: bold;
-        color: #333;
+        color: #33;
     }
     .form-group input {
         width: 100%;
         padding: 10px;
-        border: 1px solid #ccc;
+        border: 1px solid #cc;
         border-radius: 5px;
     }
     .form-group input[type="submit"] {
-        background-color: #4caf50;
+        background-color: #8BC34A;
         color: white;
-        border: none;
+        border: 1px;
         cursor: pointer;
-        transition: background-color 0.3s;
+        transition: background-color 0.6s;
     }
     .form-group input[type="submit"]:hover {
         background-color: #45a049;
@@ -114,7 +142,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         text-align: center;
     }
     .register-link a {
-        color: #4caf50;
+        color: #ffffff;
         text-decoration: none;
     }
     .register-link a:hover {
@@ -125,7 +153,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         margin-top: 20px;
     }
     .back-link a {
-        color: #4caf50;
+        color: #ffffff;
         text-decoration: none;
     }
     .back-link a:hover {

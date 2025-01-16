@@ -11,8 +11,8 @@ try {
 
   // Fetch available products - this should be at the start of your try block
   $productStmt = $conn->prepare("
-  SELECT fc.*, fc.farmer_id,p.image as product_image 
-  FROM farmer_crops fc 
+  SELECT fc.*, fc.farmer_id,p.image as product_image
+  FROM farmer_crops fc
   LEFT JOIN products p ON fc.product_id = p.id
   WHERE fc.quantity > 0
 ");
@@ -25,7 +25,7 @@ $products = $productStmt->get_result();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     $userId = $_SESSION['user_id'];
-    
+
     try {
         // Fetch cart items grouped by farmer
         $stmt = $conn->prepare("
@@ -45,14 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             try {
                 $orderQuery = $conn->prepare("
                     INSERT INTO orders (
-                        farmer_id, 
-                        customer_id, 
-                        product_id, 
-                        customer_name, 
-                        crop_name, 
-                        quantity, 
-                        total_amount, 
-                        status, 
+                        farmer_id,
+                        customer_id,
+                        product_id,
+                        customer_name,
+                        crop_name,
+                        quantity,
+                        total_amount,
+                        status,
                         order_date
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
                 ");
@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
     $stmt = $conn->prepare("DELETE FROM cart WHERE user_id = ? AND product_id = ?");
     $stmt->bind_param("ii", $userId, $productId);
-    
+
     if ($stmt->execute()) {
         $_SESSION['message'] = "Product removed from cart successfully!";
     } else {
@@ -153,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         }
     }
 
-   
+
     // Fetch cart items
     $cartStmt = $conn->prepare("
         SELECT c.*, fc.name, fc.price, fc.quantity_type, fc.image
@@ -256,119 +256,204 @@ $orderHistory = $orderHistoryStmt->get_result();
     <title>Customer Dashboard - SmartAgri</title>
 
     <style>
-    /* General Styles */
-    body {
-        font-family: 'Roboto', sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f9f9f9;
-        color: #333;
-    }
+/* General Styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f1f1f1;
+    color: #333;
+    overflow-x: hidden;
+    transition: background-color 0.3s ease;
+}
 
-    h1, h2 {
-        text-align: center;
-        color: #2c3e50;
-        margin: 0;
-        font-weight: 600;
-    }
+h1, h2 {
+    text-align: center;
+    color: #000000;
+    margin: 10;
+    font-weight: 700;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+}
 
-    /* Header Styles */
-    header {
-        background: linear-gradient(135deg, #5cb85c, #4cae4c);
-        color: white;
-        padding: 20px 15px;
-        text-align: center;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border-bottom: 3px solid #3d8f3d;
-    }
+/* Header Styles */
+header {
+    background: linear-gradient(135deg, #5cb85c, #4cae4c, #2d8b2e);
+    color: white;
+    padding: 20px 30px;
+    text-align: center;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    border-bottom: 3px solid #3d8f3d;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    transition: background 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
 
-    header h1 {
-        margin: 0;
-        font-size: 2rem;
-    }
+header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    letter-spacing: 3px;
+    transition: transform 0.3s ease;
+}
 
-    header a {
-        color: #fff;
-        text-decoration: none;
-        font-size: 1rem;
-        margin-left: 20px;
-        transition: color 0.3s;
-    }
+/* Header Link Styles */
+header a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.1rem;
+    margin-left: 25px;
+    transition: color 0.4s ease, transform 0.3s ease;
+    letter-spacing: 1px;
+}
 
-    header a:hover {
-        color: #f1f1f1;
-    }
+header a:hover {
+    color: #f1f1f1;
+    transform: translateY(-3px);
+}
 
-    /* Forms */
-    form label {
-        font-size: 1rem;
-        font-weight: 500;
-        margin-bottom: 5px;
-        display: block;
-        color: #34495e;
+/* Animations */
+@keyframes headerAnimation {
+    0% {
+        transform: translateY(-30px);
+        opacity: 0;
     }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
 
-    form input, form select, .form-control {
-        width: 100%;
-        padding: 10px;
-        margin: 8px 0;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        box-sizing: border-box;
-        font-size: 1rem;
-        background-color: #fff;
-        transition: border-color 0.3s ease-in-out;
-    }
+/* Apply animation to header */
+header {
+    animation: headerAnimation 0.8s ease-out;
+}
 
-    form input:focus, form select:focus, .form-control:focus {
-        border-color: #5cb85c;
-        outline: none;
-    }
+header h1 {
+    animation: headerAnimation 1.2s ease-out;
+}
 
-    .btn-primary {
-        background: linear-gradient(135deg, #28a745, #218838);
-        color: #fff;
-        border: none;
-        padding: 12px 20px;
-        font-size: 1rem;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: 500;
-        transition: background 0.3s, transform 0.2s;
-        display: block;
-        width: 100%;
-    }
+/* Hover Effects */
+header:hover {
+    background: linear-gradient(135deg, #4cae4c, #3d8f3d, #2d8b2e);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+}
 
-    .btn-primary:hover {
-        background: linear-gradient(135deg, #218838, #1e7e34);
-        transform: translateY(-3px);
-    }
+header a:hover {
+    color: #d1f9d1;
+    transform: translateY(-5px);
+}
 
-    /* Alerts */
-    .alert {
-        padding: 15px;
-        margin: 20px auto;
-        border-radius: 8px;
-        max-width: 600px;
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        animation: slideIn 0.5s ease-out;
-    }
 
-    .alert-success {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-    }
+/* Form Labels */
+form label {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    display: block;
+    color: #2c3e50;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
 
-    .alert-danger {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
+/* Form Inputs */
+form input, form select, .form-control {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    background: linear-gradient(to bottom, #f9f9f9, #ffffff);
+    transition: all 0.4s ease-in-out;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+form input:focus, form select:focus, .form-control:focus {
+    border-color: #6ab04c;
+    outline: none;
+    background: linear-gradient(to bottom, #eafaf1, #ffffff);
+    transform: scale(1.02);
+}
+
+/* Submit Button */
+.btn-primary {
+    background: linear-gradient(135deg, #6ab04c, #48c78e);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background 0.4s, transform 0.2s, box-shadow 0.3s;
+    display: block;
+    width: 100%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #48c78e, #6ab04c);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.25);
+}
+
+.btn-primary:active {
+    transform: translateY(1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Alerts */
+.alert {
+    padding: 15px;
+    margin: 20px auto;
+    border-radius: 12px;
+    max-width: 600px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.6s ease-out, glow 2s infinite ease-in-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, #dff9fb, #6ab04c);
+    color: #155724;
+    border: none;
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, #fab1a0, #ff7675);
+    color: #fff;
+    border: none;
+}
+
+/* Alert Animation */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
     }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes glow {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+    }
+}
+
 
     /* Cart Icon */
     .cart-icon {
@@ -376,6 +461,7 @@ $orderHistory = $orderHistoryStmt->get_result();
         top: 20px;
         right: 30px;
         background: linear-gradient(135deg, #5cb85c, #4cae4c);
+        background-size: 200% 200%; /* For gradient animation */
         color: white;
         padding: 12px 25px;
         border-radius: 50px;
@@ -388,17 +474,60 @@ $orderHistory = $orderHistoryStmt->get_result();
         gap: 8px;
         font-weight: 500;
         z-index: 1000;
+        animation: pulse 1.5s infinite ease-in-out, gradientShift 3s infinite ease-in-out; /* Adding gradient animation */
     }
 
     .cart-icon:before {
         content: '🛒';
         font-size: 1.5em;
+        animation: bounce 1.5s infinite; /* Bouncing icon animation */
     }
 
+    /* Hover Effect */
     .cart-icon:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
     }
+
+    /* Pulsing Animation */
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+        50% {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        100% {
+            transform: scale(1);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+    }
+
+    /* Bouncing Animation */
+    @keyframes bounce {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-5px);
+        }
+    }
+
+    /* Gradient Shift Animation */
+    @keyframes gradientShift {
+        0% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+
 
     /* Product Grid */
     .product-grid {
@@ -445,90 +574,137 @@ $orderHistory = $orderHistoryStmt->get_result();
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     }
 
-    /* Modal */
-    .modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        z-index: 1000;
-    }
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8); /* Darker overlay for a sleek look */
+    z-index: 1000;
+    backdrop-filter: blur(8px); /* Adds a blur effect for modern aesthetics */
+}
 
-    .modal-content {
-        background: #fff;
-        margin: 10% auto;
-        padding: 20px;
-        width: 90%;
-        max-width: 500px;
-        border-radius: 10px;
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
-        animation: fadeIn 0.3s ease-out;
-    }
+/* Modal Content */
+.modal-content {
+    background: linear-gradient(135deg, #ff7eb3, #ff758c, #ff6a64); /* Gradient background for the modal */
+    margin: 10% auto;
+    padding: 25px;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 20px; /* Softer corners for a modern look */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); /* Deeper shadow for emphasis */
+    animation: fadeIn 0.4s ease-out;
+    position: relative; /* For positioning the close button */
+    color: #fff; /* White text for contrast */
+}
 
-    .modal-content h2 {
-        margin: 0 0 15px;
-        font-size: 1.5rem;
-        color: #34495e;
-    }
+/* Modal Header */
+.modal-content h2 {
+    margin: 0 0 15px;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff; /* White text to match gradient */
+    text-align: center;
+    text-shadow: 0 3px 6px rgba(0, 0, 0, 0.3); /* Subtle text shadow for depth */
+}
 
-    .close {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        font-size: 1.5rem;
-        cursor: pointer;
-        color: #555;
-    }
+/* Close Button */
+.close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: #fff;
+    background: linear-gradient(135deg, #ff6a64, #ff758c); /* Matching gradient */
+    border: none;
+    border-radius: 50%;
+    padding: 5px 12px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
 
-    /* Cart Sidebar */
-    .cart-sidebar {
-        position: fixed;
-        top: 0;
-        right: -500px;
-        width: 400px;
-        height: 70%;
-        background: #fff;
-        box-shadow: -4px 0 10px rgba(0, 0, 0, 0.1);
-        transition: right 0.4s ease;
-        z-index: 1000;
-        padding: 20px;
-    }
+.close:hover {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #ff758c, #ff7eb3); /* Reversed gradient for hover */
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.4);
+}
 
-    .cart-sidebar.active {
-        right: 0;
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
     }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
-    .cart-sidebar h2 {
-        margin: 0;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #5cb85c;
-        font-size: 1.5rem;
-        color: #2c3e50;
-    }
+/* Cart Sidebar */
+.cart-sidebar {
+    position: fixed;
+    top: 0;
+    right: -500px;
+    width: 400px;
+    height: 100%;
+    background: linear-gradient(135deg, #6a11cb, #2575fc); /* Gradient background */
+    box-shadow: -4px 0 10px rgba(0, 0, 0, 0.2);
+    transition: right 0.4s ease;
+    z-index: 1000;
+    padding: 20px;
+    color: #fff; /* Ensure text is visible on gradient */
+}
 
-    .cart-sidebar .cart-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin: 10px 0;
-        padding: 10px;
-        border-bottom: 1px solid #ddd;
-    }
+.cart-sidebar.active {
+    right: 0;
+}
 
-    .cart-sidebar .cart-total {
-        font-size: 1.3rem;
-        text-align: right;
-        margin-top: 20px;
-        font-weight: bold;
-    }
+.cart-sidebar h2 {
+    margin: 0;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.7); /* Semi-transparent white border */
+    font-size: 1.5rem;
+    color: #f1f1f1; /* Slightly lighter text color for contrast */
+}
+
+.cart-sidebar .cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 10px 0;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1); /* Semi-transparent background for cart items */
+    border-radius: 8px;
+    color: #f1f1f1;
+}
+
+.cart-sidebar .cart-item:hover {
+    background: rgba(255, 255, 255, 0.2); /* Subtle hover effect */
+}
+
+.cart-sidebar .cart-total {
+    font-size: 1.3rem;
+    text-align: right;
+    margin-top: 20px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
 
     .order-history {
         max-width: 800px;
         margin: 20px auto;
         font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #ff9a9e, #fad0c4); /* Gradient background */
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+        color: #2c3e50; /* Text color for readability */
     }
 
     .order-item {
@@ -536,10 +712,15 @@ $orderHistory = $orderHistoryStmt->get_result();
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        background-color: #f9f9f9;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.7); /* Semi-transparent white background for items */
+        border: 1px solid rgba(0, 0, 0, 0.1); /* Subtle border */
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Card-like shadow */
+    }
+
+    .order-item:hover {
+        background: rgba(255, 255, 255, 0.9); /* Lighter hover effect */
     }
 
     .order-details {
@@ -549,22 +730,24 @@ $orderHistory = $orderHistoryStmt->get_result();
     .order-item h4 {
         margin: 0 0 10px;
         font-size: 18px;
-        color: #333;
+        color: #34495e; /* Slightly darker text for better contrast */
     }
 
     .order-item p {
         margin: 5px 0;
-        color: #555;
+        color: #555; /* Neutral text color */
     }
 
     .order-image {
         max-width: 100px;
         max-height: 100px;
-        border-radius: 5px;
-        border: 1px solid #ddd;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1); /* Border with subtle transparency */
         object-fit: cover;
         margin-left: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Subtle shadow for the image */
     }
+
 
 
     .search-bar {
@@ -595,7 +778,7 @@ $orderHistory = $orderHistoryStmt->get_result();
 
     </style>
 
- 
+
 </head>
 <body>
 <header>
@@ -603,7 +786,7 @@ $orderHistory = $orderHistoryStmt->get_result();
         <a href="logout.php" class="button">Logout</a>
     </header>
     <h1>Welcome, <?= htmlspecialchars($_SESSION['username']); ?>!</h1>
-    <h2>Available Crops</h2>
+
 
 
 
@@ -688,7 +871,7 @@ $orderHistory = $orderHistoryStmt->get_result();
     </div>
 <?php endif; ?>
 
-        
+
 
 <!-- Product Modal -->
 <div id="productModal" class="modal">
@@ -697,6 +880,8 @@ $orderHistory = $orderHistoryStmt->get_result();
         <div id="productDetails"></div>
     </div>
 </div>
+
+<h2>Available Crops</h2>
 
 
 
@@ -709,8 +894,8 @@ $orderHistory = $orderHistoryStmt->get_result();
                     <?php
                     $display_image = !empty($row['image']) ? $row['image'] : $row['product_image'];
                     ?>
-                    <img src="<?= htmlspecialchars($display_image); ?>" 
-                         class="card-img-top" 
+                    <img src="<?= htmlspecialchars($display_image); ?>"
+                         class="card-img-top"
                          alt="<?= htmlspecialchars($row['name']); ?>"
                          style="height: 200px; object-fit: cover;">
                     <div class="card-body">
@@ -744,7 +929,7 @@ function showProductDetails(product) {
     const details = document.getElementById('productDetails');
 
 
-    
+
     details.innerHTML = `
         <h2>${product.name}</h2>
         <img src="${product.image || product.product_image}" alt="${product.name}" style="max-width: 200px;">
@@ -754,20 +939,20 @@ function showProductDetails(product) {
              <input type="hidden" name="farmer_id" value="${product.farmer_id}">
             <div class="form-group">
                 <label>Quantity:</label>
-                <input type="number" 
-                       name="quantity" 
-                       min="1" 
-                       value="1" 
-                       required 
+                <input type="number"
+                       name="quantity"
+                       min="1"
+                       value="1"
+                       required
                        class="form-control">
             </div>
- 
+
 
 
             <button type="submit" name="add_to_cart" class="btn-primary">Add to Cart</button>
         </form>
     `;
-    
+
     modal.style.display = "block";
 }
 
