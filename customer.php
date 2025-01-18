@@ -123,7 +123,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         $productId = $_POST['product_id'];
         $userId = $_SESSION['user_id'];
-        $farmer_id=$_POST['farmer_id'];
         $quantity = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 1;
 
 
@@ -238,6 +237,36 @@ $orderHistoryStmt = $conn->prepare("
 $orderHistoryStmt->bind_param("i", $_SESSION['user_id']);
 $orderHistoryStmt->execute();
 $orderHistory = $orderHistoryStmt->get_result();
+
+// Fetch top-selling products
+$query = "
+    SELECT
+        products.id AS product_id,
+        products.name AS product_name,
+        products.price AS product_price,
+        products.image AS product_image,
+        SUM(orders.quantity) AS total_sold
+    FROM
+        orders
+    JOIN
+        products ON orders.product_id = products.id
+    GROUP BY
+        products.id
+    ORDER BY
+        total_sold DESC
+    LIMIT 10
+";
+
+$result = $conn->query($query);
+
+// Initialize an array to store the results
+$topSellingProducts = [];
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $topSellingProducts[] = $row;
+    }
+}
+
 
 
 
@@ -574,6 +603,40 @@ form input:focus, form select:focus, .form-control:focus {
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     }
 
+    .top-selling-products {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-top: 20px;
+    }
+    .product-card-item {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 15px;
+        width: calc(25% - 20px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    .product-img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+    .add-to-cart-button {
+        margin-top: 10px;
+        padding: 8px 15px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .add-to-cart-button:hover {
+        background-color: #218838;
+    }
+
+
 /* Modal */
 .modal {
     display: none;
@@ -880,6 +943,31 @@ form input:focus, form select:focus, .form-control:focus {
         <div id="productDetails"></div>
     </div>
 </div>
+
+
+<div class="top-selling-products">
+    <?php if (!empty($topSellingProducts)): ?>
+        <?php foreach ($topSellingProducts as $product): ?>
+            <div class="product-card-item">
+                <img
+                    src="<?= htmlspecialchars($product['product_image']); ?>"
+                    alt="<?= htmlspecialchars($product['product_name']); ?>"
+                    class="product-img"
+                >
+                <h4><?= htmlspecialchars($product['product_name']); ?></h4>
+                <p>Price: TK. <?= htmlspecialchars($product['product_price']); ?></p>
+                <p>Sold: <?= htmlspecialchars($product['total_sold']); ?></p>
+                <form method="POST">
+                    <input type="hidden" name="product_id" value="<?= htmlspecialchars($product['product_id']); ?>">
+                    <button type="submit" name="add_to_cart" class="add-to-cart-button">Add to Cart</button>
+                </form>
+            </div>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <p>No top-selling products available at the moment.</p>
+    <?php endif; ?>
+</div>
+
 
 <h2>Available Crops</h2>
 
