@@ -231,8 +231,9 @@ $orderHistoryStmt = $conn->prepare("
         fc.image
     FROM orders o
     LEFT JOIN farmer_crops fc ON o.product_id = fc.product_id
-    WHERE o.customer_id = ?
-    ORDER BY o.order_date DESC
+WHERE o.status = 'Delivered' AND o.customer_id = ?
+  ORDER BY o.order_date DESC
+
 ");
 $orderHistoryStmt->bind_param("i", $_SESSION['user_id']);
 $orderHistoryStmt->execute();
@@ -1125,6 +1126,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </script>
 
+
+
+<h2 id="orderHistory">Your Order History</h2>
+
+<?php if ($orderHistory->num_rows > 0): ?>
+    <div class="order-history">
+        <?php while ($order = $orderHistory->fetch_assoc()): ?>
+            <div class="order-item">
+                <div class="order-details">
+                    <h4><?= htmlspecialchars($order['crop_name']) ?></h4>
+                    <p>Quantity: <?= htmlspecialchars($order['quantity']) ?> <?= htmlspecialchars($order['quantity_type']) ?></p>
+                    <p>Total Amount: TK. <?= htmlspecialchars($order['total_amount']) ?></p>
+                    <p>Status: <?= htmlspecialchars(ucfirst($order['status'])) ?></p>
+                    <p>Order Date: <?= htmlspecialchars(date("d-M-Y H:i:s", strtotime($order['order_date']))) ?></p>
+                </div>
+                <img
+                    src="<?= htmlspecialchars($order['image']) ?>"
+                    alt="<?= htmlspecialchars($order['crop_name']) ?>"
+                    class="order-image"
+                >
+            </div>
+            <hr>
+        <?php endwhile; ?>
+    </div>
+<?php else: ?>
+    <p>You have not placed any orders yet.</p>
+<?php endif; ?>
 
 
 

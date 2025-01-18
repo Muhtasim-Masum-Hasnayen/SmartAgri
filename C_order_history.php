@@ -771,12 +771,20 @@ form input:focus, form select:focus, .form-control:focus {
     .order-history {
         max-width: 800px;
         margin: 20px auto;
-        font-family: Arial, sans-serif;
-        background: linear-gradient(135deg, #ff9a9e, #fad0c4); /* Gradient background */
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
-        color: #2c3e50; /* Text color for readability */
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #1A73E8, #4285F4); /* Premium gradient */
+        padding: 25px;
+        border-radius: 15px; /* More pronounced rounding for modern aesthetics */
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); /* Enhanced shadow for premium depth */
+        color: #FFFFFF; /* White text for contrast on gradient */
+        text-align: center; /* Center-align for uniformity */
+    }
+
+    .order-history h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        font-weight: 700;
+        color: #FFD700; /* Gold accent for titles */
     }
 
     .order-item {
@@ -784,40 +792,67 @@ form input:focus, form select:focus, .form-control:focus {
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
-        padding: 15px;
-        background: rgba(255, 255, 255, 0.7); /* Semi-transparent white background for items */
-        border: 1px solid rgba(0, 0, 0, 0.1); /* Subtle border */
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Card-like shadow */
+        padding: 20px;
+        background: #FFFFFF; /* Clean white for individual items */
+        border: 1px solid #E0E0E0; /* Neutral border */
+        border-radius: 12px; /* Smooth edges for elegance */
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); /* Soft shadow */
+        transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth hover effect */
     }
 
     .order-item:hover {
-        background: rgba(255, 255, 255, 0.9); /* Lighter hover effect */
+        transform: translateY(-5px); /* Lifted effect */
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* Stronger shadow on hover */
     }
 
     .order-details {
         max-width: 70%;
+        text-align: left;
     }
 
     .order-item h4 {
         margin: 0 0 10px;
-        font-size: 18px;
-        color: #34495e; /* Slightly darker text for better contrast */
+        font-size: 20px;
+        font-weight: 600;
+        color: #2C2C2C; /* Dark text for readability */
     }
 
     .order-item p {
         margin: 5px 0;
-        color: #555; /* Neutral text color */
+        font-size: 14px;
+        color: #555; /* Neutral gray */
     }
 
     .order-image {
         max-width: 100px;
         max-height: 100px;
-        border-radius: 8px;
-        border: 1px solid rgba(0, 0, 0, 0.1); /* Border with subtle transparency */
+        border-radius: 12px; /* Rounded corners for softness */
+        border: 2px solid #FFD700; /* Premium gold border */
         object-fit: cover;
         margin-left: 20px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Subtle shadow for the image */
+        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15); /* Shadow for emphasis */
+    }
+
+    .order-item .order-actions {
+        display: flex;
+        gap: 10px; /* Space between buttons */
+    }
+
+    .order-item .button {
+        background: linear-gradient(135deg, #FFD700, #FFC300); /* Gold gradient buttons */
+        color: #2C2C2C; /* Dark text for contrast */
+        border: none;
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    .order-item .button:hover {
+        background: linear-gradient(135deg, #FFC300, #FFB400); /* Darker gold on hover */
+        transform: scale(1.05); /* Slight scaling effect */
     }
 
 
@@ -954,7 +989,7 @@ form input:focus, form select:focus, .form-control:focus {
         </ul>
     </div>
 <header>
-        <h1>Customer Dashboard - SmartAgri </h1>
+        <h1>Customer Order History - SmartAgri </h1>
         <a href="logout.php" class="button">Logout</a>
     </header>
     <h1>Welcome, <?= htmlspecialchars($_SESSION['username']); ?>!</h1>
@@ -963,170 +998,33 @@ form input:focus, form select:focus, .form-control:focus {
 
 
 
-<!-- Cart Icon -->
-<div class="cart-icon" onclick="toggleCart()">
-    Cart <span class="cart-count"><?= count($_SESSION['cart'] ?? []) ?></span>
-</div>
 
 
+<h2 id="orderHistory">Your Order History</h2>
 
-<!-- Update the cart section with confirmation -->
-<div class="cart-sidebar" id="cartSidebar">
-    <h2>Shopping Cart</h2>
-    <span class="close" onclick="toggleCart()">&times;</span>
-    <div id="cartItems">
-        <?php if (!empty($cartItems)): ?>
-            <?php foreach ($cartItems as $item): ?>
-                <div class="cart-item">
-    <div>
-        <h4><?= htmlspecialchars($item['name']) ?></h4>
-        <p>Price: TK. <?= htmlspecialchars($item['price']) ?></p>
-        <div class="quantity-controls">
-            <form method="POST" style="display: inline;">
-                <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
-                <input type="hidden" name="update_quantity" value="decrease">
-                <button type="submit" class="btn-decrement">-</button>
-            </form>
-            <span><?= htmlspecialchars($item['quantity']) ?></span>
-            <form method="POST" style="display: inline;">
-                <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
-                <input type="hidden" name="update_quantity" value="increase">
-                <button type="submit" class="btn-increment">+</button>
-            </form>
-        </div>
-        <p>Total: TK. <?= htmlspecialchars($item['price'] * $item['quantity']) ?></p>
-    </div>
-    <form method="POST">
-        <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
-        <button type="submit" name="remove_from_cart" class="remove-btn">Remove</button>
-    </form>
-</div>
-
-            <?php endforeach; ?>
-            <div class="cart-total">
-                Total: TK. <?= htmlspecialchars($cartTotal) ?>
+<?php if ($orderHistory->num_rows > 0): ?>
+    <div class="order-history">
+        <?php while ($order = $orderHistory->fetch_assoc()): ?>
+            <div class="order-item">
+                <div class="order-details">
+                    <h4><?= htmlspecialchars($order['crop_name']) ?></h4>
+                    <p>Quantity: <?= htmlspecialchars($order['quantity']) ?> <?= htmlspecialchars($order['quantity_type']) ?></p>
+                    <p>Total Amount: TK. <?= htmlspecialchars($order['total_amount']) ?></p>
+                    <p>Status: <?= htmlspecialchars(ucfirst($order['status'])) ?></p>
+                    <p>Order Date: <?= htmlspecialchars(date("d-M-Y H:i:s", strtotime($order['order_date']))) ?></p>
+                </div>
+                <img
+                    src="<?= htmlspecialchars($order['image']) ?>"
+                    alt="<?= htmlspecialchars($order['crop_name']) ?>"
+                    class="order-image"
+                >
             </div>
-            <form method="POST" class="place-order-form" onsubmit="return confirmOrder()">
-                <button type="submit" name="place_order" class="btn-primary">Place Order</button>
-            </form>
-        <?php else: ?>
-            <p>Your cart is empty</p>
-        <?php endif; ?>
+            <hr>
+        <?php endwhile; ?>
     </div>
-</div>
-
-
-
-<!-- Add message display -->
-<?php if (isset($_SESSION['message'])): ?>
-    <div class="alert alert-success">
-        <?= htmlspecialchars($_SESSION['message']) ?>
-        <?php unset($_SESSION['message']); ?>
-    </div>
+<?php else: ?>
+    <p>You have not placed any orders yet.</p>
 <?php endif; ?>
-
-<?php if (isset($_SESSION['error'])): ?>
-    <div class="alert alert-danger">
-        <?= htmlspecialchars($_SESSION['error']) ?>
-        <?php unset($_SESSION['error']); ?>
-    </div>
-<?php endif; ?>
-
-
-
-<!-- Product Modal -->
-<div id="productModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <div id="productDetails"></div>
-    </div>
-</div>
-
-
-
-
-
-
-
-    <script>
-function toggleCart() {
-    document.getElementById('cartSidebar').classList.toggle('active');
-}
-function confirmOrder() {
-    return confirm('Are you sure you want to place this order?');
-}
-
-
-function showProductDetails(product) {
-
-
-    const modal = document.getElementById('productModal');
-    const details = document.getElementById('productDetails');
-
-
-
-    details.innerHTML = `
-        <h2>${product.name}</h2>
-        <img src="${product.image || product.product_image}" alt="${product.name}" style="max-width: 200px;">
-        <p>Price: TK. ${product.price}</p>
-        <form method="POST">
-            <input type="hidden" name="product_id" value="${product.product_id}">
-             <input type="hidden" name="farmer_id" value="${product.farmer_id}">
-            <div class="form-group">
-                <label>Quantity:</label>
-                <input type="number"
-                       name="quantity"
-                       min="1"
-                       value="1"
-                       required
-                       class="form-control">
-            </div>
-
-
-
-            <button type="submit" name="add_to_cart" class="btn-primary">Add to Cart</button>
-        </form>
-    `;
-
-    modal.style.display = "block";
-}
-
-
-function closeModal() {
-    document.getElementById('productModal').style.display = 'none';
-}
-
-function toggleCart() {
-    document.getElementById('cartSidebar').classList.toggle('active');
-}
-
-
-// Close modal when clicking outside
-window.onclick = function(event) {
-    const modal = document.getElementById('productModal');
-    if (event.target == modal) {
-        closeModal();
-    }
-}
-
-
-
-// Add to your customer.js
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-hide alerts after 3 seconds
-    const alerts = document.querySelectorAll('.alert');
-    alerts.forEach(alert => {
-        setTimeout(() => {
-            alert.style.opacity = '0';
-            setTimeout(() => alert.remove(), 500);
-        }, 3000);
-    });
-});
-
-</script>
-
-
-
 
 
 

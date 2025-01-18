@@ -967,7 +967,18 @@ form input:focus, form select:focus, .form-control:focus {
 <div class="cart-icon" onclick="toggleCart()">
     Cart <span class="cart-count"><?= count($_SESSION['cart'] ?? []) ?></span>
 </div>
-
+<div class="search-bar">
+    <form method="GET" action="customer.php">
+        <input
+            type="text"
+            name="search"
+            placeholder="Search for crops or products..."
+            value="<?= htmlspecialchars($_GET['search'] ?? '') ?>"
+            class="search-input"
+        >
+        <button type="submit" class="search-button">Search</button>
+    </form>
+</div>
 
 
 <!-- Update the cart section with confirmation -->
@@ -1045,6 +1056,35 @@ form input:focus, form select:focus, .form-control:focus {
 
 
 
+<h2>Available Crops</h2>
+
+
+
+
+<div class="product-grid">
+    <?php if ($products->num_rows > 0): ?>
+        <?php while ($row = $products->fetch_assoc()): ?>
+            <div class="product-card" onclick="showProductDetails(<?= htmlspecialchars(json_encode($row)) ?>)">
+                <div class="card">
+                    <?php
+                    $display_image = !empty($row['image']) ? $row['image'] : $row['product_image'];
+                    ?>
+                    <img src="<?= htmlspecialchars($display_image); ?>"
+                         class="card-img-top"
+                         alt="<?= htmlspecialchars($row['name']); ?>"
+                         style="height: 200px; object-fit: cover;">
+                    <div class="card-body">
+                        <h3 class="card-title"><?= htmlspecialchars($row['name']); ?></h3>
+                        <p class="card-text">Price: TK. <?= htmlspecialchars($row['price']); ?> / <?= htmlspecialchars($row['quantity_type']); ?></p>
+                        <p class="card-text">Available: <?= htmlspecialchars($row['quantity']); ?> <?= htmlspecialchars($row['quantity_type']); ?></p>
+                    </div>
+                </div>
+            </div>
+        <?php endwhile; ?>
+    <?php else: ?>
+        <p style="text-align: center;">No products available at the moment.</p>
+    <?php endif; ?>
+</div>
 
 
 

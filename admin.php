@@ -173,6 +173,7 @@ $query = "SELECT pr.id, pr.product_name, pr.product_image, pr.status,pr.quantity
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
 
+
 /* Sidebar Styling */
 .sidebar {
     position: fixed;
@@ -501,9 +502,5 @@ form input[type="submit"]:hover {
                 </table>
             <?php endforeach; ?>
         </div>
-
-
-
-
 </body>
 </html>
