@@ -141,6 +141,15 @@ $query = "SELECT pr.id, pr.product_name, pr.product_image, pr.status,pr.quantity
           WHERE pr.status = 'Pending'";
  $result = $conn->query($query);
 
+// Fetch top-selling products (based on the number of orders)
+$top_selling_query = "
+    SELECT p.id, p.name, p.image, p.quantity_type, COUNT(o.order_id) AS order_count
+    FROM products p
+    LEFT JOIN orders o ON p.id = o.product_id
+    GROUP BY p.id
+    ORDER BY order_count DESC
+    LIMIT 5"; // Change the LIMIT as needed
+$top_selling_result = $conn->query($top_selling_query);
 
 ?>
 
@@ -360,6 +369,45 @@ form input[type="submit"]:hover {
     margin-top: 10px;
 }
 
+/* Styling for the Top Selling Products section */
+.section h2 {
+    font-size: 22px;
+    color: #333;
+    font-weight: 600;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+table thead th {
+    background: linear-gradient(to right, #007bff, #0056b3); /* Gradient for table header */
+    color: #ffffff;
+    text-align: left;
+    padding: 15px 20px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+table tbody td {
+    border: 1px solid #ddd;
+    padding: 15px;
+    font-size: 14px;
+    color: #495057;
+}
+
+table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+table tbody td img {
+    max-width: 100px;
+    max-height: 100px;
+    object-fit: cover;
+}
 
     </style>
 </head>
@@ -480,6 +528,41 @@ form input[type="submit"]:hover {
 </table>
 
 
+<!-- Top Selling Products Section -->
+<div class="section">
+    <h2>Top Selling Products</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Product ID</th>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Quantity Type</th>
+                <th>Orders Sold</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if ($top_selling_result->num_rows > 0): ?>
+                <?php while ($row = $top_selling_result->fetch_assoc()): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($row['id']); ?></td>
+                        <td>
+                            <!-- Display Product Image -->
+                            <img src="<?= htmlspecialchars($row['image']); ?>" alt="<?= htmlspecialchars($row['name']); ?>" width="100" height="100">
+                        </td>
+                        <td><?= htmlspecialchars($row['name']); ?></td>
+                        <td><?= htmlspecialchars($row['quantity_type']); ?></td>
+                        <td><?= htmlspecialchars($row['order_count']); ?></td>
+                    </tr>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="5" class="text-center">No top-selling products found.</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</div>
 
 
 
