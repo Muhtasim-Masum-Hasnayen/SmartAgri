@@ -89,38 +89,109 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        .input-group {
-            max-width: 500px;
-            margin: 0 auto;
+       body {
+            background: #f9f9f9;
+            font-family: 'Roboto', sans-serif;
         }
-        .preview-image {
-            max-width: 300px;
-            max-height: 300px;
-            display: none;
-            margin-top: 10px;
-        }
-        .form-container {
-            background: #fff;
+
+        .header {
+            background: linear-gradient(45deg, #3b8d99, #6b6b83);
+            color: white;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            margin-top: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        .img-thumbnail {
-                max-width: 200px; /* Increased width */
-                max-height: 200px; /* Increased height */
-                object-fit: cover; /* Ensures the image fits within the dimensions */
-            }
-            table td {
-                vertical-align: middle; /* Center aligns content vertically */
-                text-align: center; /* Center aligns content horizontally */
-            }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        .form-container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: #3b8d99;
+            border: none;
+            transition: background 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: #6b6b83;
+        }
+
+        .table {
+            background: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table thead {
+            background: linear-gradient(45deg, #3b8d99, #6b6b83);
+            color: white;
+        }
+
+        .table td, .table th {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .table tbody tr:hover {
+            background: #f1f1f1;
+            cursor: pointer;
+        }
+
+        .badge-available {
+            background: #3b8d99;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .badge-sold-out {
+            background: #d9534f;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .modal-header {
+            background: linear-gradient(45deg, #3b8d99, #6b6b83);
+            color: white;
+        }
+
+        .modal-content {
+            border-radius: 10px;
+        }
+
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            display: block;
+            margin: 20px auto;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #777;
+        }
     </style>
 </head>
 <body>
 
 <div class="container py-4">
-    <h1 class="mb-4">Crop Management</h1>
+    <div class="header">
+        <h1><i class="fas fa-seedling"></i> Crop Management</h1>
+        <p>Manage your crops and inventory with ease</p>
+    </div>
 
     <!-- Alert Messages -->
     <?php if (isset($_GET['success'])): ?>
