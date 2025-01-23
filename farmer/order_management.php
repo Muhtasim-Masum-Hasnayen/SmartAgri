@@ -76,7 +76,7 @@ $farmer_id = $_SESSION['user_id'];
                                 <td><span class='badge bg-" . ($row['status'] == 'Pending' ? 'warning' : 'success') . "'>{$row['status']}</span></td>
                                 <td>{$row['order_date']}</td>
                                 <td>
-                                    <a href='view_order.php?id={$row['order_id']}' class='btn btn-info btn-sm btn-action'>View</a>
+                                  
                                     <a href='update_order_status.php?id={$row['order_id']}' class='btn btn-warning btn-sm btn-action'>Update Status</a>
                                 </td>
                             </tr>";

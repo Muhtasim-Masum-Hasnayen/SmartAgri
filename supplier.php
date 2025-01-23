@@ -366,13 +366,101 @@ try {
             100% { transform: scale(1); }
         }
 
+        /* Sidebar Styles */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 250px;
+    background: #388e3c;
+    padding-top: 80px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-menu li {
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-menu a {
+    display: block;
+    padding: 15px 25px;
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.sidebar-menu a:hover {
+    background: #2e7d32;
+    padding-left: 35px;
+}
+
+.sidebar-menu a.active {
+    background: #2e7d32;
+    border-left: 4px solid #81c784;
+}
+
+/* Adjust main content to accommodate sidebar */
+.container {
+    margin-left: 250px;
+    padding: 20px;
+}
+
+/* Adjust header to accommodate sidebar */
+header {
+    margin-left: 250px;
+    padding: 20px;
+    background: #4caf50;
+    color: white;
+    text-align: center;
+    position: relative;
+}
+
+
+/* Add these to your existing sidebar styles */
+.sidebar-menu .logout-btn {
+    color: #fff;
+    padding: 15px 25px;
+    text-decoration: none;
+    display: block;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 10px;
+}
+
+.sidebar-menu .logout-btn:hover {
+    background: #d32f2f;
+    padding-left: 35px;
+}
+
+
+
+
 
     </style>
 </head>
 <body>
+<div class="sidebar">
+    <ul class="sidebar-menu">
+        <li><a href="supplier.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'supplier.php') ? 'class="active"' : ''; ?>>Dashboard</a></li>
+        <li><a href="supplier/supplier_orders.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'supplier_orders.php') ? 'class="active"' : ''; ?>>Order Management</a></li>
+        <li><a href="logout.php" class="logout-btn">Logout</a></li>
+    </ul>
+</div>
+
+
     <header>
         <h1>Supplier Dashboard - AgriBuzz</h1>
-        <a href="logout.php">Logout</a>
+       
     </header>
 
     <div class="container">
