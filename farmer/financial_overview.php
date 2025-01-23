@@ -60,7 +60,8 @@ $top_products_query = "
     ORDER BY total_revenue DESC
     LIMIT 5";
 
-
+//Monthly Financial Summary: Revenue, Expenses, Net Profit, and Purchase Insights for the Last 12 Months"
+    
 
     $financial_query = $conn->prepare("
     SELECT 
@@ -326,7 +327,7 @@ $financial_result = $financial_query->get_result();
         <ul class="sidebar-menu">
             <li><a href="../farmer.php"><i class="fas fa-home"></i> Dashboard</a></li>
             <li><a href="financial_overview.php" class="active"><i class="fas fa-chart-line"></i> Financial Overview</a></li>
-            <li><a href="crop_management.php"><i class="fas fa-seedling"></i> Crop Management</a></li>
+            <li><a href="../crop_management.php"><i class="fas fa-seedling"></i> Crop Management</a></li>
             <li><a href="order_management.php"><i class="fas fa-shopping-cart"></i> Orders</a></li>
             <li><a href="../logout.php" class="text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>

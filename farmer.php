@@ -306,7 +306,7 @@ include 'database.php';
         <a href="farmer/inventory_management.php"><i class="fas fa-boxes"></i> Inventory Management</a>
         <a href="farmer/financial_overview.php"><i class="fas fa-wallet"></i> Financial Overview</a>
         <a href="analytics_report.php"><i class="fas fa-chart-bar"></i> Analytics and Reports</a>
-        <a href="farmer/my_account.php"><i class="fas fa-user"></i> My Account</a>
+        
     </div>
 
 
