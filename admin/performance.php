@@ -9,6 +9,111 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Admin') {
 }
 
 
+// top customer with all performance
+// Query to fetch analytics data
+$sql = "
+   SELECT 
+    c.customer_id,
+    c.name AS customer_name,
+    u_customer.email AS customer_email, -- Email for customer from users table
+    COUNT(o.order_id) AS total_orders,
+    IFNULL(SUM(o.total_amount), 0) AS total_spent,
+    GROUP_CONCAT(DISTINCT p.name SEPARATOR ', ') AS purchased_products,
+    (
+        SELECT f.farm_name 
+        FROM farmer f 
+        JOIN users u_farmer ON f.farmer_id = u_farmer.user_id -- Join farmer with users to get email
+        WHERE f.farmer_id = (
+            SELECT o.farmer_id 
+            FROM orders o 
+            WHERE o.customer_id = c.customer_id 
+            GROUP BY o.farmer_id 
+            ORDER BY COUNT(o.farmer_id) DESC 
+            LIMIT 1
+        )
+    ) AS top_farmer,
+    (
+        SELECT u_farmer.email 
+        FROM farmer f 
+        JOIN users u_farmer ON f.farmer_id = u_farmer.user_id -- Fetch farmer's email
+        WHERE f.farmer_id = (
+            SELECT o.farmer_id 
+            FROM orders o 
+            WHERE o.customer_id = c.customer_id 
+            GROUP BY o.farmer_id 
+            ORDER BY COUNT(o.farmer_id) DESC 
+            LIMIT 1
+        )
+    ) AS top_farmer_email, -- Email for the top farmer
+    COUNT(DISTINCT r.id) AS total_reviews,
+    IFNULL(AVG(r.rating), 0) AS average_rating,
+    COUNT(DISTINCT s.supplier_id) AS total_suppliers
+FROM 
+    customer c
+JOIN users u_customer ON c.customer_id = u_customer.user_id -- Join customer with users to get email
+LEFT JOIN orders o ON c.customer_id = o.customer_id
+LEFT JOIN products p ON o.product_id = p.id
+LEFT JOIN product_reviews r ON c.customer_id = r.customer_id
+LEFT JOIN supplier_sales ss ON c.customer_id = ss.farmer_id
+LEFT JOIN supplies s ON ss.supplier_id = s.supplier_id
+GROUP BY c.customer_id
+ORDER BY c.name ASC
+LIMIT 5; -- Restrict the results to the top 5
+";
+
+
+$result = $conn->query($sql);
+
+if (!$result) {
+    die("Error executing query: " . $conn->error);
+}
+
+
+
+
+
+// top farmer top review revinue generated, completion of order
+$sql1 = "
+    SELECT 
+        f.farmer_id,
+        f.farm_name,
+        u.email AS farmer_email,
+        COUNT(DISTINCT o.order_id) AS total_orders,
+        IFNULL(SUM(o.total_amount), 0) AS total_sales,
+        AVG(r.rating) AS average_rating,
+        COUNT(DISTINCT p.id) AS unique_products_sold,
+        SUM(CASE WHEN o.status = 'Delivered' THEN 1 ELSE 0 END) / COUNT(o.order_id) * 100 AS timely_order_rate,
+        SUM(CASE WHEN o.status = 'Cancelled' THEN 1 ELSE 0 END) / COUNT(o.order_id) * 100 AS cancelation_rate
+    FROM 
+        farmer f
+    JOIN users u ON f.farmer_id = u.user_id
+    LEFT JOIN orders o ON f.farmer_id = o.farmer_id
+    LEFT JOIN products p ON o.product_id = p.id
+    LEFT JOIN product_reviews r ON r.farmer_id = f.farmer_id
+    GROUP BY 
+        f.farmer_id, f.farm_name, u.email
+    ORDER BY 
+        total_sales DESC, 
+        average_rating DESC, 
+        timely_order_rate DESC, 
+        cancelation_rate ASC, 
+        unique_products_sold DESC
+    LIMIT 5;
+";
+
+// Execute query
+$result1 = $conn->query($sql1);
+
+
+
+
+
+
+
+
+
+
+
 ?>
 
 <!DOCTYPE html>
@@ -20,6 +125,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Admin') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Add Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
     <style>
 
 
@@ -233,7 +339,6 @@ form input[type="submit"]:hover {
 </head>
 <body>
 
-
  <!-- Sidebar -->
  <div class="sidebar">
         <ul class="nav flex-column">
@@ -286,6 +391,79 @@ form input[type="submit"]:hover {
         <h1>Admin Dashboard - SmartAgri</h1>
         <a href="logout.php" class="button">Logout</a>
     </header>
+
+
+    <main>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Customer ID</th>
+                        <th>Customer Name</th>
+                        <th>Email</th>
+                        <th>Total Orders</th>
+                        <th>Total Spent (TK)</th>
+                        <th>Purchased Products</th>
+                      
+                        <th>Total Reviews</th>
+                        <th>Average Rating</th>
+                       
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($row = $result->fetch_assoc()): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($row['customer_id']); ?></td>
+                            <td><?= htmlspecialchars($row['customer_name']); ?></td>
+                            <td><?= htmlspecialchars($row['customer_email']); ?></td>
+                            <td><?= htmlspecialchars($row['total_orders']); ?></td>
+                            <td><?= htmlspecialchars(number_format($row['total_spent'], 2)); ?></td>
+                            <td><?= htmlspecialchars($row['purchased_products']); ?></td>
+                         
+                            <td><?= htmlspecialchars($row['total_reviews']); ?></td>
+                            <td><?= htmlspecialchars(number_format($row['average_rating'], 1)); ?></td>
+                            
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <main>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Farmer ID</th>
+                        <th>Farm Name</th>
+                        <th>Email</th>
+                        <th>Total Orders</th>
+                        <th>Total Sales (TK)</th>
+                        <th>Average Rating</th>
+                        <th>Unique Products Sold</th>
+                        <th>Timely Order Rate (%)</th>
+                        <th>Cancellation Rate (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($row = $result1->fetch_assoc()): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($row['farmer_id']); ?></td>
+                            <td><?= htmlspecialchars($row['farm_name']); ?></td>
+                            <td><?= htmlspecialchars($row['farmer_email']); ?></td>
+                            <td><?= htmlspecialchars($row['total_orders']); ?></td>
+                            <td><?= htmlspecialchars(number_format($row['total_sales'], 2)); ?></td>
+                            <td class="highlight"><?= htmlspecialchars(number_format($row['average_rating'], 1)); ?></td>
+                            <td><?= htmlspecialchars($row['unique_products_sold']); ?></td>
+                            <td><?= htmlspecialchars(number_format($row['timely_order_rate'], 2)); ?></td>
+                            <td><?= htmlspecialchars(number_format($row['cancelation_rate'], 2)); ?></td>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+    </main>
 
 
 
