@@ -395,7 +395,7 @@ form input[type="submit"]:hover {
             </li>
             
             <li class="nav-item">
-                <a class="nav-link" href="logout.php">
+                <a class="nav-link" href="../logout.php">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
             </li>
@@ -405,7 +405,7 @@ form input[type="submit"]:hover {
 
     <header>
         <h1>Admin Dashboard - SmartAgri</h1>
-        <a href="logout.php" class="button">Logout</a>
+        <a href="../logout.php" class="button">Logout</a>
     </header>
 
 
