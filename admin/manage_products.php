@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'database.php'; // Include the database connection file
+include '../database.php'; // Include the database connection file
 
 // Check if the user is logged in and has the role of 'Admin'
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Admin') {
@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_product'])) {
     if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
         $image_tmp = $_FILES['product_image']['tmp_name'];
         $image_name = basename($_FILES['product_image']['name']);
-        $image_path = 'uploads/' . $image_name;
+        $image_path = '../uploads/' . $image_name;
 
         // Ensure 'uploads/' directory exists
         if (!is_dir('uploads')) {
@@ -124,7 +124,7 @@ if (isset($_GET['delete_product']) && is_numeric($_GET['delete_product'])) {
     // Execute the query
     if ($stmt->execute()) {
         // Redirect with success message
-        header('Location: admin.php?success=Product deleted successfully.');
+        header('Location: manage_products.php?success=Product deleted successfully.');
         exit();
     } else {
         // Redirect with error message
@@ -418,42 +418,38 @@ table tbody td img {
  <div class="sidebar">
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link" href="admin.php">
+                <a class="nav-link" href="../admin/admin.php">
                     <i class="fas fa-home"></i> Dashboard
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="analytics/analytics.php">
+                <a class="nav-link" href="../analytics/analytics.php">
                     <i class="fas fa-chart-bar"></i> Analytics
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="manage_farmers.php">
+                <a class="nav-link" href="../admin/manage_farmers.php">
                     <i class="fas fa-users"></i> Manage Farmers
                 </a>
             </li>
             <li class="nav-item">
-                            <a class="nav-link" href="manage_suppliers.php">
+                            <a class="nav-link" href="../admin/manage_suppliers.php">
                                 <i class="fas fa-users"></i> Manage Suppliers
                             </a>
                         </li>
                         <li class="nav-item">
-                                                    <a class="nav-link" href="manage_products.php">
+                                                    <a class="nav-link" href="../admin/manage_products.php">
                                                         <i class="fas fa-users"></i> Manage Products
                                                     </a>
                                                 </li>
             <li class="nav-item">
-                <a class="nav-link" href="manage_customers.php">
+                <a class="nav-link" href="../admin/manage_customers.php">
                     <i class="fas fa-user-friends"></i> Manage Customers
                 </a>
             </li>
+            
             <li class="nav-item">
-                <a class="nav-link" href="manage_orders.php">
-                    <i class="fas fa-shopping-cart"></i> Manage Orders
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="logout.php">
+                <a class="nav-link" href="../logout.php">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
             </li>
@@ -463,7 +459,7 @@ table tbody td img {
 
     <header>
         <h1>Manage Products - SmartAgri</h1>
-        <a href="logout.php" class="button">Logout</a>
+        <a href="../logout.php" class="button">Logout</a>
     </header>
 
 
@@ -504,7 +500,7 @@ table tbody td img {
                     <td><?php echo $row['id']; ?></td>
                     <td><?php echo htmlspecialchars($row['product_name']); ?></td>
                     <td>
-                        <img src="<?php echo htmlspecialchars($row['product_image']); ?>" alt="Product Image" width="100">
+                        <img src="../<?php echo htmlspecialchars($row['product_image']); ?>" alt="Product Image" width="100">
                     </td>
                     <td><?php echo htmlspecialchars($row['farmer_name']); ?></td>
                     <td><?php echo htmlspecialchars($row['quantity_type']); ?></td>
@@ -548,7 +544,7 @@ table tbody td img {
                         <td><?= htmlspecialchars($row['id']); ?></td>
                         <td>
                             <!-- Display Product Image -->
-                            <img src="<?= htmlspecialchars($row['image']); ?>" alt="<?= htmlspecialchars($row['name']); ?>" width="100" height="100">
+                            <img src="../<?= htmlspecialchars($row['image']); ?>" alt="<?= htmlspecialchars($row['name']); ?>" width="100" height="100">
                         </td>
                         <td><?= htmlspecialchars($row['name']); ?></td>
                         <td><?= htmlspecialchars($row['quantity_type']); ?></td>
@@ -585,7 +581,7 @@ table tbody td img {
                     <td><?= htmlspecialchars($product['id']); ?></td>
                     <td>
                         <!-- Display Product Image -->
-                        <img src="<?= htmlspecialchars($product['image']); ?>" alt="<?= htmlspecialchars($product['name']); ?>" width="100" height="100">
+                        <img src="../<?= htmlspecialchars($product['image']); ?>" alt="<?= htmlspecialchars($product['name']); ?>" width="100" height="100">
                     </td>
                     <td><?= htmlspecialchars($product['name']); ?></td>
                     <td>

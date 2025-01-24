@@ -55,9 +55,9 @@ include('../database.php');
     <!-- Copy the sidebar from admin.php -->
     <div class="sidebar">
         <!-- Same sidebar content as in admin.php -->
-        <ul class="nav flex-column">
+        <ul class="nav flex-column"> 
             <li class="nav-item">
-                <a class="nav-link" href="../admin.php">
+                <a class="nav-link" href="../admin/admin.php">
                     <i class="fas fa-home"></i> Dashboard
                 </a>
             </li>

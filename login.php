@@ -27,7 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Redirect based on user role
             $role = $user['role']; // Fetch the role from the database
             if ($role === 'Admin') {
-                header('Location: admin.php');
+                header('Location: admin/admin.php');
             } elseif ($role === 'Farmer') {
                 header('Location: farmer.php');
             } elseif ($role === 'Customer') {

@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'database.php'; // Include the database connection file
+include '../database.php'; // Include the database connection file
 
 // Check if the user is logged in and has the role of 'Admin'
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Admin') {
@@ -17,15 +17,6 @@ $users_result = $conn->query("SELECT * FROM users");
 
 // Fetch all products
 $products_result = $conn->query("SELECT * FROM products");
-
-// Fetch all supplies
-$supplies_result = $conn->query("SELECT s.*, u.name AS supplier_name FROM supplies s JOIN users u ON s.supplier_id = u.user_id");
-
-// Fetch all orders
-$orders_result = $conn->query("SELECT o.*, p.name AS product_name, u.name AS customer_name
-                               FROM orders o
-                               JOIN products p ON o.product_id = p.id
-                               JOIN users u ON o.customer_id = u.user_id");
 
 
 
@@ -130,27 +121,6 @@ if (isset($_GET['delete_product']) && is_numeric($_GET['delete_product'])) {
 
 
 
-
-// Handle user deletion
-if (isset($_GET['delete_user']) && is_numeric($_GET['delete_user'])) {
-    $user_id = $_GET['delete_user'];
-
-    // Prepare the DELETE query
-    $sql = "DELETE FROM users WHERE user_id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $user_id);
-
-    // Execute the query
-    if ($stmt->execute()) {
-        // Redirect with success message
-        header('Location: admin.php?success=User deleted successfully.');
-        exit();
-    } else {
-        // Redirect with error message
-        header('Location: admin.php?error=Failed to delete user.');
-        exit();
-    }
-}
 
 // Fetch product requests
 $query = "SELECT pr.id, pr.product_name, pr.product_image, pr.status,pr.quantity_type, f.name AS farmer_name
@@ -394,7 +364,7 @@ form input[type="submit"]:hover {
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="analytics/analytics.php">
+                <a class="nav-link" href="../analytics/analytics.php">
                     <i class="fas fa-chart-bar"></i> Analytics
                 </a>
             </li>
@@ -418,11 +388,7 @@ form input[type="submit"]:hover {
                     <i class="fas fa-user-friends"></i> Manage Customers
                 </a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" href="manage_orders.php">
-                    <i class="fas fa-shopping-cart"></i> Manage Orders
-                </a>
-            </li>
+            
             <li class="nav-item">
                 <a class="nav-link" href="logout.php">
                     <i class="fas fa-sign-out-alt"></i> Logout
@@ -454,53 +420,7 @@ form input[type="submit"]:hover {
 
 
 
-        <!-- Manage Users -->
-        <div class="section">
-            <h2>Manage Users</h2>
-
-            <?php
-            // Fetch grouped users by role and limit to last 15 users
-            $query = "
-                SELECT *
-                FROM users
-                ORDER BY role, created_at DESC
-                LIMIT 15
-            ";
-            $users_result = $conn->query($query);
-
-            // Group users by role
-            $users_by_role = [];
-            while ($user = $users_result->fetch_assoc()) {
-                $users_by_role[$user['role']][] = $user;
-            }
-            ?>
-
-            <?php foreach ($users_by_role as $role => $users): ?>
-                <h3><?= htmlspecialchars(ucfirst($role)); ?> Users</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>User ID</th>
-                            <th>Username</th>
-                            <th>Email</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($users as $user): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($user['user_id']); ?></td>
-                                <td><?= htmlspecialchars($user['name']); ?></td>
-                                <td><?= htmlspecialchars($user['email']); ?></td>
-                                <td>
-                                    <!-- Delete User -->
-                                    <a href="admin.php?delete_user=<?= $user['user_id']; ?>" class="button" style="background: #d9534f;">Delete</a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php endforeach; ?>
-        </div>
+            
+           
 </body>
 </html>
