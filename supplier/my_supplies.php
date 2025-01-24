@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'database.php'; // Include the database connection file
+include('../database.php');
 
 // Check if the user is logged in and has the role of 'Supplier'
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Supplier') {
@@ -451,10 +451,10 @@ header {
 <body>
 <div class="sidebar">
     <ul class="sidebar-menu">
-        <li><a href="supplier.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'supplier.php') ? 'class="active"' : ''; ?>>Dashboard</a></li>
-        <li><a href="supplier/supplier_orders.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'supplier_orders.php') ? 'class="active"' : ''; ?>>Order Management</a></li>
-        <li><a href="supplier/add_new_supply.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'add_new_supply.php') ? 'class="active"' : ''; ?>>Add New Supply</a></li>
-        <li><a href="supplier/my_supplies.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'my_supplies.php') ? 'class="active"' : ''; ?>>My Supplies</a></li>
+        <li><a href="../supplier.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'supplier.php') ? 'class="active"' : ''; ?>>Dashboard</a></li>
+        <li><a href="supplier_orders.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'supplier_orders.php') ? 'class="active"' : ''; ?>>Order Management</a></li>
+        <li><a href="add_new_supply.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'add_new_supply.php') ? 'class="active"' : ''; ?>>Add New Supply</a></li>
+        <li><a href="my_supplies.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'my_supplies.php') ? 'class="active"' : ''; ?>>My Supplies</a></li>
 
 
         <li><a href="logout.php" class="logout-btn">Logout</a></li>
@@ -464,63 +464,11 @@ header {
 
     <header>
         <h1>Supplier Dashboard - SmartAgri</h1>
-       
+
     </header>
 
     <div class="container">
-        <!-- Filter Form -->
-        <div class="form-container">
-            <h2>Filter Supplies</h2>
-            <form method="GET" action="supplier.php">
-                <label for="price_min">Min Price:</label>
-                <input type="number" name="price_min" value="<?= htmlspecialchars($price_min); ?>">
 
-                <label for="price_max">Max Price:</label>
-                <input type="number" name="price_max" value="<?= htmlspecialchars($price_max); ?>">
-
-                <label for="quantity_type">Quantity Type:</label>
-                <select name="quantity_type">
-                    <option value="">All</option>
-                    <option value="Per-Kg" <?= $quantity_type === 'Per-Kg' ? 'selected' : ''; ?>>Per-Kg</option>
-                    <option value="Per-Piece" <?= $quantity_type === 'Per-Piece' ? 'selected' : ''; ?>>Per-Piece</option>
-                </select>
-
-                <input type="submit" value="Filter">
-            </form>
-        </div>
-
-        <!-- Add New Supply Form -->
-        <div class="form-container">
-            <h2>Add New Supply</h2>
-            <?php if (!empty($error)): ?>
-                <div class="error"><?= htmlspecialchars($error); ?></div>
-            <?php endif; ?>
-            <?php if (!empty($success_message)): ?>
-                <div class="success"><?= htmlspecialchars($success_message); ?></div>
-            <?php endif; ?>
-            <form method="POST" action="supplier.php" enctype="multipart/form-data">
-                <label for="supply_name">Supply Name:</label>
-                <input type="text" name="supply_name" required>
-
-                <label for="quantity">Quantity:</label>
-                <input type="number" name="quantity" required>
-
-                <label for="quantity_type">Quantity Type:</label>
-                <select name="quantity_type" required>
-                    <option value="Per-Piece" selected>Per-Piece</option>
-                    <option value="Per-Kg">Per-Kg</option>
-                </select>
-
-
-                <label for="price">Price:</label>
-                <input type="text" name="price" required>
-
-                <label for="supply_image">Image:</label>
-                <input type="file" name="supply_image" accept="image/*">
-
-                <input type="submit" name="add_supply" value="Add Supply">
-            </form>
-        </div>
 
         <!-- Most Expensive Supply -->
         <div class="table-container">
@@ -557,11 +505,12 @@ header {
                             <td><?= htmlspecialchars($supply['quantity_type']); ?></td>
                             <td><?= htmlspecialchars($supply['price']); ?></td>
                             <td>
-                                <?php if (!empty($supply['image'])): ?>
-                                    <img src="<?= htmlspecialchars($supply['image']); ?>" alt="Supply Image" style="max-width: 300px;">
-                                <?php else: ?>
-                                    No Image
-                                <?php endif; ?>
+                               <?php if (!empty($supply['image'])): ?>
+                                                                   <img src="<?= htmlspecialchars($supply['image']); ?>" alt="Supply Image" style="max-width: 300px;">
+                                                               <?php else: ?>
+                                                                   No Image
+                                                               <?php endif; ?>
+
                             </td>
                             <td>
                                <!-- Edit Form -->

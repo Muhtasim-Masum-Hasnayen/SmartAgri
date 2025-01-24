@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'database.php'; // Include the database connection file
+include('../database.php');
 
 // Check if the user is logged in and has the role of 'Supplier'
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Supplier') {
@@ -124,34 +124,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['edit_supply'])) {
     }
 }
 
-// Fetch supplies for the logged-in supplier with filtering
-$supplier_id = $_SESSION['user_id'];
-try {
-    $sql = "
-    SELECT *
-    FROM supplies
-    WHERE supplier_id = ?
-    AND price BETWEEN ? AND ?
-    AND (quantity_type = ? OR ? = '')";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("iiiss", $supplier_id, $price_min, $price_max, $quantity_type, $quantity_type);
-    $stmt->execute();
-    $supplies_result = $stmt->get_result();
 
-    // Subquery to fetch the most expensive supply
-    $sql_most_expensive = "
-    SELECT supply_name, price
-    FROM supplies
-    WHERE supplier_id = ?
-    AND price = (SELECT MAX(price) FROM supplies WHERE supplier_id = ?)";
-    $stmt_expensive = $conn->prepare($sql_most_expensive);
-    $stmt_expensive->bind_param("ii", $supplier_id, $supplier_id);
-    $stmt_expensive->execute();
-    $expensive_result = $stmt_expensive->get_result();
-    $most_expensive = $expensive_result->fetch_assoc();
-} catch (Exception $e) {
-    $error = "Error fetching supplies: " . $e->getMessage();
-}
 ?>
 
 <!DOCTYPE html>
@@ -172,10 +145,10 @@ try {
         }
 
         .container {
-            width: 90%;
-            max-width: 1200px;
+            width: 70%;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 40px;
+            padding: 30px;
         }
 
         /* Header */
@@ -216,10 +189,11 @@ try {
         /* Form and Table Container */
         .form-container, .table-container {
             background: #ffffff; /* White background for forms and tables */
-            border-radius: 12px;
+            border-radius: 10px;
+            width : 60%;
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
-            margin: 30px 0;
-            padding: 30px;
+            margin: 0 auto;
+            padding: 20px;
             position: relative;
             z-index: 0;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -451,10 +425,10 @@ header {
 <body>
 <div class="sidebar">
     <ul class="sidebar-menu">
-        <li><a href="supplier.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'supplier.php') ? 'class="active"' : ''; ?>>Dashboard</a></li>
-        <li><a href="supplier/supplier_orders.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'supplier_orders.php') ? 'class="active"' : ''; ?>>Order Management</a></li>
-        <li><a href="supplier/add_new_supply.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'add_new_supply.php') ? 'class="active"' : ''; ?>>Add New Supply</a></li>
-        <li><a href="supplier/my_supplies.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'my_supplies.php') ? 'class="active"' : ''; ?>>My Supplies</a></li>
+<li><a href="../supplier.php"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="supplier_orders.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'supplier_orders.php') ? 'class="active"' : ''; ?>>Order Management</a></li>
+                <li><a href="add_new_supply.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'add_new_supply.php') ? 'class="active"' : ''; ?>>Add New Supply</a></li>
+                <li><a href="my_supplies.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'my_supplies.php') ? 'class="active"' : ''; ?>>My Supplies</a></li>
 
 
         <li><a href="logout.php" class="logout-btn">Logout</a></li>
@@ -463,31 +437,9 @@ header {
 
 
     <header>
-        <h1>Supplier Dashboard - SmartAgri</h1>
-       
+        <h1>Add New Supply - SmartAgri</h1>
+
     </header>
-
-    <div class="container">
-        <!-- Filter Form -->
-        <div class="form-container">
-            <h2>Filter Supplies</h2>
-            <form method="GET" action="supplier.php">
-                <label for="price_min">Min Price:</label>
-                <input type="number" name="price_min" value="<?= htmlspecialchars($price_min); ?>">
-
-                <label for="price_max">Max Price:</label>
-                <input type="number" name="price_max" value="<?= htmlspecialchars($price_max); ?>">
-
-                <label for="quantity_type">Quantity Type:</label>
-                <select name="quantity_type">
-                    <option value="">All</option>
-                    <option value="Per-Kg" <?= $quantity_type === 'Per-Kg' ? 'selected' : ''; ?>>Per-Kg</option>
-                    <option value="Per-Piece" <?= $quantity_type === 'Per-Piece' ? 'selected' : ''; ?>>Per-Piece</option>
-                </select>
-
-                <input type="submit" value="Filter">
-            </form>
-        </div>
 
         <!-- Add New Supply Form -->
         <div class="form-container">
@@ -522,96 +474,7 @@ header {
             </form>
         </div>
 
-        <!-- Most Expensive Supply -->
-        <div class="table-container">
-            <h2>Most Expensive Supply</h2>
-            <?php if ($most_expensive): ?>
-                <p><strong>Supply Name:</strong> <?= htmlspecialchars($most_expensive['supply_name']); ?></p>
-                <p><strong>Price:</strong> <?= htmlspecialchars($most_expensive['price']); ?></p>
-            <?php else: ?>
-                <p>No supplies found.</p>
-            <?php endif; ?>
-        </div>
 
-        <!-- Supplies Table -->
-        <div class="table-container">
-            <h2>Your Supplies</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Supply ID</th>
-                        <th>Supply Name</th>
-                        <th>Quantity</th>
-                        <th>Quantity Type</th>
-                        <th>Price</th>
-                        <th>Image</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($supply = $supplies_result->fetch_assoc()): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($supply['supply_id']); ?></td>
-                            <td><?= htmlspecialchars($supply['supply_name']); ?></td>
-                            <td><?= htmlspecialchars($supply['quantity']); ?></td>
-                            <td><?= htmlspecialchars($supply['quantity_type']); ?></td>
-                            <td><?= htmlspecialchars($supply['price']); ?></td>
-                            <td>
-                                <?php if (!empty($supply['image'])): ?>
-                                    <img src="<?= htmlspecialchars($supply['image']); ?>" alt="Supply Image" style="max-width: 300px;">
-                                <?php else: ?>
-                                    No Image
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                               <!-- Edit Form -->
-                               <form method="POST" action="supplier.php" enctype="multipart/form-data" style="display: inline-block;">
-                                   <input type="hidden" name="supply_id" value="<?= $supply['supply_id']; ?>">
-                                   <input type="hidden" name="existing_image" value="<?= $supply['image']; ?>">
 
-                                   <!-- Supply Name -->
-                                   <label>Name:
-                                       <input type="text" name="supply_name" value="<?= htmlspecialchars($supply['supply_name']); ?>" required>
-                                   </label>
-
-                                   <!-- Quantity -->
-                                   <label>Qty:
-                                       <input type="number" name="quantity" value="<?= htmlspecialchars($supply['quantity']); ?>" required>
-                                   </label>
-
-                                   <!-- Quantity Type -->
-                                   <label>Quantity Type:
-                                       <select name="quantity_type" required>
-                                           <option value="Per-Kg" <?= $supply['quantity_type'] === 'Per-Kg' ? 'selected' : ''; ?>>Per-Kg</option>
-                                           <option value="Per-Piece" <?= $supply['quantity_type'] === 'Per-Piece' ? 'selected' : ''; ?>>Per-Piece</option>
-                                       </select>
-                                   </label>
-
-                                   <!-- Price -->
-                                   <label>Price:
-                                       <input type="text" name="price" value="<?= htmlspecialchars($supply['price']); ?>" required>
-                                   </label>
-
-                                   <!-- Image Upload -->
-                                   <label>Image:
-                                       <input type="file" name="supply_image" accept="image/*">
-                                   </label>
-
-                                   <!-- Save Button -->
-                                   <input type="submit" name="edit_supply" value="Save">
-                               </form>
-
-                                <!-- Delete Form -->
-                                <form method="POST" action="supplier.php" style="display: inline-block;">
-                                    <input type="hidden" name="supply_id" value="<?= $supply['supply_id']; ?>">
-                                    <input type="submit" name="delete_supply" value="Delete" onclick="return confirm('Are you sure?')">
-                                </form>
-                            </td>
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
 </body>
 </html>
