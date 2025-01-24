@@ -369,6 +369,11 @@ form input[type="submit"]:hover {
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" href="./performance.php">
+                    <i class="fas fa-chart-bar"></i>performence
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" href="manage_farmers.php">
                     <i class="fas fa-users"></i> Manage Farmers
                 </a>

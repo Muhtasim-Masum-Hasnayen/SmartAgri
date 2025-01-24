@@ -8,17 +8,17 @@ try {
         header("Location: login.php");
         exit();
     }
-
+  /*
     if (isset($_GET['product_id'])) {
         $productId = $_GET['product_id'];
-       
+      
         // Fetch the product details from the database
         $productStmt = $conn->prepare("SELECT fc.*, fc.farmer_id, fc.image as product_image FROM farmer_crops fc WHERE fc.product_id = ?");
         $productStmt->bind_param("i", $productId);
         $productStmt->execute();
         $product = $productStmt->get_result()->fetch_assoc();
     
-        if (isset($_GET['product_id'])) {
+      if (isset($_GET['product_id'])) {
             $productId = $_GET['product_id'];
             $productStmt = $conn->prepare("SELECT fc.*, fc.farmer_id, fc.image as product_image FROM farmer_crops fc WHERE fc.product_id = ?");
             $productStmt->bind_param("i", $productId);
@@ -107,6 +107,7 @@ try {
         
     
     }
+        */
 
 
 
@@ -237,8 +238,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
 
         // Check if product already exists in cart
-        $stmt = $conn->prepare("SELECT * FROM cart WHERE user_id = ? AND product_id = ?");
-        $stmt->bind_param("ii", $userId, $productId);
+        $stmt = $conn->prepare("SELECT * FROM cart WHERE user_id = ? AND product_id = ? AND farmer_id=?");
+        $stmt->bind_param("iii", $userId, $productId,$farmer_id);
         $stmt->execute();
         $result = $stmt->get_result();
 
@@ -265,7 +266,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     $cartStmt = $conn->prepare("
         SELECT c.*, fc.name, fc.price, fc.quantity_type, fc.image
         FROM cart c
-        JOIN farmer_crops fc ON c.product_id = fc.product_id
+        JOIN farmer_crops fc ON c.product_id = fc.product_id AND c.farmer_id=fc.farmer_id
         WHERE c.user_id = ?
     ");
     $cartStmt->bind_param("i", $_SESSION['user_id']);
