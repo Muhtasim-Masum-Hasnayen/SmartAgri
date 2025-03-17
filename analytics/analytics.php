@@ -53,22 +53,57 @@ include('../database.php');
 </head>
 <body>
     <!-- Copy the sidebar from admin.php -->
-    <div class="sidebar">
-        <!-- Same sidebar content as in admin.php -->
-        <ul class="nav flex-column"> 
+   
+        
+<div class="sidebar">
+        <ul class="nav flex-column">
             <li class="nav-item">
                 <a class="nav-link" href="../admin/admin.php">
                     <i class="fas fa-home"></i> Dashboard
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="analytics.php">
+                <a class="nav-link" href="./analytics.php">
                     <i class="fas fa-chart-bar"></i> Analytics
                 </a>
             </li>
-            <!-- Rest of your navigation items -->
+            <li class="nav-item">
+                <a class="nav-link" href="../admin/performance.php">
+                    <i class="fas fa-chart-bar"></i>performence
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="../admin/manage_farmers.php">
+                    <i class="fas fa-users"></i> Manage Farmers
+                </a>
+            </li>
+            <li class="nav-item">
+                            <a class="nav-link" href="../admin/manage_suppliers.php">
+                                <i class="fas fa-users"></i> Manage Suppliers
+                            </a>
+                        </li>
+
+
+                        <li class="nav-item">
+                <a class="nav-link" href="../admin/manage_customers.php">
+                    <i class="fas fa-user-friends"></i> Manage Customers
+                </a>
+            </li>
+                        <li class="nav-item">
+                              <a class="nav-link" href="../admin/manage_products.php">
+                                  <i class="fas fa-users"></i> Manage Products
+                                           </a>
+                                                </li>
+            
+
+            <li class="nav-item">
+                <a class="nav-link" href="../logout.php">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </li>
         </ul>
     </div>
+
 
     <!-- Analytics Content -->
     <div class="main-content">
@@ -130,7 +165,7 @@ include('../database.php');
                           LEFT JOIN orders o ON f.farmer_id = o.farmer_id
                           WHERE o.order_date BETWEEN ? AND ?
                           GROUP BY f.farmer_id, u.name
-                          ORDER BY total_revenue DESC";
+                          ORDER BY total_revenue DESC";c
                 
                             
                             $stmt = $conn->prepare($query);

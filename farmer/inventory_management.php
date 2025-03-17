@@ -251,9 +251,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .select2-container--default .select2-selection--single .select2-selection__arrow {
             height: 36px;
         }
+        header {
+    background-color: #4CAF50;
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed; /* Make the header fixed */
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000; /* Ensure it stays on top of other elements */
+}
+
+
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        header a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            margin-left: 20px;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #1f2937;
+            color: white;
+            height: 100vh;
+            padding: 20px;
+            position: fixed;
+        }
+
+        .sidebar h2 {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .sidebar a {
+            color: #b0bec5;
+            text-decoration: none;
+            padding: 10px 15px;
+            display: block;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .sidebar a:hover {
+            background-color: #4b5563;
+            color: white;
+        }
+
     </style>
 </head>
 <body>
+<div class="sidebar">
+        <h2>Navigation</h2>
+        <a href="../farmer.php"><i class="fas fa-seedling"></i> Dashboard</a>
+        <a href="../crop_management.php"><i class="fas fa-seedling"></i> Crop/Product Management</a>
+        <a href="../Buy.php"><i class="fas fa-shopping-cart"></i> Buy from Suppliers</a>
+        <a href="../addNewProduct.php"><i class="fas fa-plus-circle"></i> Add New Product</a>
+        <a href="order_management.php"><i class="fas fa-clipboard-list"></i> Order Management</a>
+        <a href="inventory_management.php"><i class="fas fa-boxes"></i> Inventory Management</a>
+        <a href="financial_overview.php"><i class="fas fa-wallet"></i> Financial Overview</a>
+        <a href="../analytics_report.php"><i class="fas fa-chart-bar"></i> Analytics and Reports</a>
+        
+    </div>
     <div class="container">
         <h2>Farmers Inventory Management</h2>
         <div class="summary">

@@ -290,22 +290,22 @@ include 'database.php';
 </head>
 <body>
 <header>
-        <h1>Farmer Dashboard</h1>
+        <h1>কৃষক ড্যাশবোর্ড</h1>
         <div>
-            <span>Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?></span>
+            <span>স্বাগতম, <?php echo htmlspecialchars($_SESSION['username']); ?></span>
             <a href="logout.php" class="btn btn-danger ms-3">Logout</a>
         </div>
     </header>
 
     <div class="sidebar">
-        <h2>Navigation</h2>
-        <a href="crop_management.php"><i class="fas fa-seedling"></i> Crop/Product Management</a>
-        <a href="Buy.php"><i class="fas fa-shopping-cart"></i> Buy from Suppliers</a>
-        <a href="addNewProduct.php"><i class="fas fa-plus-circle"></i> Add New Product</a>
-        <a href="farmer/order_management.php"><i class="fas fa-clipboard-list"></i> Order Management</a>
-        <a href="farmer/inventory_management.php"><i class="fas fa-boxes"></i> Inventory Management</a>
-        <a href="farmer/financial_overview.php"><i class="fas fa-wallet"></i> Financial Overview</a>
-        <a href="analytics_report.php"><i class="fas fa-chart-bar"></i> Analytics and Reports</a>
+        <h2>ন্যাভিগেশন</h2>
+        <a href="crop_management.php"><i class="fas fa-seedling"></i> ফসল/পণ্য ব্যবস্থাপনা</a>
+        <a href="Buy.php"><i class="fas fa-shopping-cart"></i> সরবরাহকারীদের কাছ থেকে কিনুন</a>
+        <a href="addNewProduct.php"><i class="fas fa-plus-circle"></i> নতুন পণ্য যোগ করুন</a>
+        <a href="farmer/order_management.php"><i class="fas fa-clipboard-list"></i> অর্ডার ম্যানেজমেন্ট</a>
+        <a href="farmer/inventory_management.php"><i class="fas fa-boxes"></i> ইনভেন্টরি ম্যানেজমেন্ট</a>
+        <a href="farmer/financial_overview.php"><i class="fas fa-wallet"></i> আর্থিক সারসংক্ষেপ</a>
+        <a href="analytics_report.php"><i class="fas fa-chart-bar"></i> বিশ্লেষণ এবং প্রতিবেদন</a>
         
     </div>
 
@@ -315,7 +315,7 @@ include 'database.php';
     
     <div class="stats-cards">
         <div class="stat-card">
-            <h3>Today's Sales</h3>
+            <h3>আজকের বিক্রয়</h3>
             <?php
             $today = date('Y-m-d');
             $stmt = $conn->prepare("
@@ -335,7 +335,7 @@ include 'database.php';
 
  <!-- Monthly Sales Card -->
  <div class="stat-card">
-            <h3>This Month's Sales</h3>
+            <h3>এই মাসের বিক্রয়</h3>
             <?php
             $firstDayOfMonth = date('Y-m-01');
             $lastDayOfMonth = date('Y-m-t');
@@ -361,7 +361,7 @@ include 'database.php';
 
 
         <div class="stat-card">
-            <h3>Active Listings</h3>
+            <h3>সক্রিয় তালিকা</h3>
             <?php
             $stmt = $conn->prepare("
                 SELECT COUNT(*) as count 
@@ -376,7 +376,7 @@ include 'database.php';
         </div>
    <!-- Pending Orders Card -->
    <div class="stat-card">
-            <h3>Pending Orders</h3>
+            <h3>মুলতুবি অর্ডার</h3>
             <?php
             $stmt = $conn->prepare("
                 SELECT COUNT(*) as count
@@ -394,7 +394,7 @@ include 'database.php';
     </div>
  <!-- Recent Orders Section -->
  <div class="recent-orders feed-section">
-        <h2>Recent Orders</h2>
+        <h2>সাম্প্রতিক অর্ডারগুলি</h2>
         <?php
         $stmt = $conn->prepare("
             SELECT order_id, total_amount, status, order_date
@@ -428,7 +428,7 @@ include 'database.php';
 
     <!-- Low Stock Alerts -->
     <div class="low-stock-alerts feed-section">
-        <h2>Low Stock Alerts</h2>
+        <h2>কম স্টক সতর্কতা</h2>
         <?php
         $stmt = $conn->prepare("
             SELECT name, quantity, quantity_type
@@ -453,7 +453,7 @@ include 'database.php';
 
     <!-- Price Trends -->
     <div class="price-trends feed-section">
-        <h2>Market Price Trends</h2>
+        <h2>বাজার মূল্যের প্রবণতা</h2>
         <div class="trends-list">
             <?php
             $stmt = $conn->prepare("

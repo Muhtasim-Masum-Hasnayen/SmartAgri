@@ -131,24 +131,24 @@
 </head>
 <body>
     <header>
-        <h1>AgriSmart : Agricultural Management System</h1>
-        <p>Efficient Farming, Better Management!</p>
+        <h1>স্মার্ট কৃষি : ডিজিটাল কৃষি সহায়ক প্ল্যাটফর্ম</h1>
+        <p>দক্ষ কৃষিকাজ, উন্নত ব্যবস্থাপনা!</p>
     </header>
     <nav>
-        <a href="dashboard.php">Home</a>
-        <a href="blog.php">Blog</a>
-        <a href="login.php">Login</a>
-        <a href="contact.php">Contact</a>
+        <a href="dashboard.php">হোম</a>
+        <a href="blog.php">ব্লগ</a>
+        <a href="login.php">লগইন</a>
+        <a href="contact.php">যোগাযোগ</a>
     </nav>
     <div class="hero">
-        <h1>Welcome to SmartAgri</h1>
+        <h1>স্মার্টকৃষিতে আপনাকে স্বাগতম</h1>
     </div>
     <div class="container">
-        <h2>Explore Agricultural Management System</h2>
-        <p>Log in to access your personalized dashboard and manage your account effectively.</p>
+        <h2>কৃষি ব্যবস্থাপনা ব্যবস্থা অন্বেষণ করুন</h2>
+        <p>আপনার ব্যক্তিগতকৃত ড্যাশবোর্ড অ্যাক্সেস করতে এবং কার্যকরভাবে আপনার অ্যাকাউন্ট পরিচালনা করতে লগ ইন করুন।</p>
     </div>
     <footer>
-        <p>&copy; 2025 Agricultural Management System. All rights reserved.</p>
+        <p>&copy; ২০২৫ কৃষি ব্যবস্থাপনা ব্যবস্থা। সর্বস্বত্ব সংরক্ষিত।</p>
     </footer>
 </body>
 </html>

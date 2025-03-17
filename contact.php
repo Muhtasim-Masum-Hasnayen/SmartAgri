@@ -124,48 +124,48 @@
 </head>
 <body>
     <header>
-        <h1>Contact Us</h1>
-        <p>Connect with the creators of the Agricultural Management System</p>
+        <h1>আমাদের সাথে যোগাযোগ করুন</h1>
+        <p>কৃষি ব্যবস্থাপনা ব্যবস্থার নির্মাতাদের সাথে সংযোগ স্থাপন করুন</p>
     </header>
     <nav>
-        <a href="dashboard.php">Home</a>
-        <a href="blog.php">Blog</a>
-        <a href="login.php">Login</a>
-        <a href="contact.php">Contact</a>
+        <a href="dashboard.php">হোম</a>
+                <a href="blog.php">ব্লগ</a>
+                <a href="login.php">লগইন</a>
+                <a href="contact.php">যোগাযোগ</a>
     </nav>
     <div class="container">
         <div class="creator">
             <img src="mmh.jpg" alt="Muhtasim Masum Hasnayen">
             <div class="creator-info">
-                <h3>Muhtasim Masum Hasnayen</h3>
-                <p><strong>Phone:</strong> 01730202960</p>
-                <p><strong>Email:</strong> <a href="mailto:hasnayenmasum@gmail.com">hasnayenmasum@gmail.com</a></p>
-                <p><strong>Facebook:</strong> <a href="https://www.facebook.com/mh.masum.908" target="_blank">Muhtasim's Facebook</a></p>
+                <h3>মুহতাসিম মাসুম হাসনায়েন</h3>
+                <p><strong>ফোন:</strong> 01730202960</p>
+                <p><strong>ইমেইল:</strong> <a href="mailto:hasnayenmasum@gmail.com">hasnayenmasum@gmail.com</a></p>
+                <p><strong>ফেসবুক:</strong> <a href="https://www.facebook.com/mh.masum.908" target="_blank">Muhtasim's Facebook</a></p>
             </div>
         </div>
 
         <div class="creator">
             <img src="Hasibur.jpg" alt="Md Hasibur Rahman">
             <div class="creator-info">
-                <h3>Md Hasibur Rahman</h3>
-                <p><strong>Phone:</strong> 01580491525</p>
-                <p><strong>Email:</strong> <a href="mailto:hasibur@gmail.com">hasibur@gmail.com</a></p>
-                <p><strong>Facebook:</strong> <a href="https://www.facebook.com/hasibur.rahmam.77" target="_blank">Hasibur's Facebook</a></p>
+                <h3>মোঃ হাসিবুর রহমান</h3>
+                <p><strong>ফোন:</strong> 01580491525</p>
+                <p><strong>ইমেইল:</strong> <a href="mailto:hasibur@gmail.com">hasibur@gmail.com</a></p>
+                <p><strong>ফেসবুক:</strong> <a href="https://www.facebook.com/hasibur.rahmam.77" target="_blank">Hasibur's Facebook</a></p>
             </div>
         </div>
 
         <div class="creator">
             <img src="AnikDeb.jpg" alt="Anik Debnath Shuvo">
             <div class="creator-info">
-                <h3>Anik Debnath Shuvo</h3>
-                <p><strong>Phone:</strong> 01780529775</p>
-                <p><strong>Email:</strong> <a href="mailto:ashuvo223401@bscse.uiu.ac.bd">ashuvo223401@bscse.uiu.ac.bd</a></p>
-                <p><strong>Facebook:</strong> <a href="https://www.facebook.com/anildebnath.shuvo" target="_blank">Anik's Facebook</a></p>
+                <h3>অনিক দেবনাথ শুভ</h3>
+                <p><strong>ফোন:</strong> 01780529775</p>
+                <p><strong>ইমেইল:</strong> <a href="mailto:ashuvo223401@bscse.uiu.ac.bd">ashuvo223401@bscse.uiu.ac.bd</a></p>
+                <p><strong>ফেসবুক:</strong> <a href="https://www.facebook.com/anildebnath.shuvo" target="_blank">Anik's Facebook</a></p>
             </div>
         </div>
     </div>
     <footer>
-        <p>&copy; 2025 Agricultural Management System. All rights reserved.</p>
+        <p>&copy; ২০২৫ কৃষি ব্যবস্থাপনা ব্যবস্থা। সর্বস্বত্ব সংরক্ষিত।</p>
     </footer>
 </body>
 </html>

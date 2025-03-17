@@ -908,52 +908,18 @@ form input:focus, form select:focus, .form-control:focus {
     </style>
 <body>
 
-
 <!-- Sidebar -->
- <div class="sidebar">
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link" href="customer.php">
-                    <i class="fas fa-home"></i> Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="ana.php">
-                    <i class="fas fa-chart-bar"></i> Analytics
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="C_market.php">
-                    <i class="fas fa-users"></i> Market
-                </a>
-            </li>
-            <li class="nav-item">
-                            <a class="nav-link" href="C_top_selling_products.php">
-                                <i class="fas fa-chart-bar"></i> Top Selling Products
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                                                    <a class="nav-link" href="C_order_history.php">
-                                                        <i class="fas fa-history"></i> Order History
-                                                    </a>
-                                                </li>
-            <li class="nav-item">
-                <a class="nav-link" href="C_purchase_history.php">
-                    <i class="fas fa-history"></i> Purchase History
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="customer_profile.php">
-                    <i class="fas fa-user"></i> customer Profile
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="logout.php">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
-            </li>
-        </ul>
-    </div>
+<div class="sidebar">
+    <ul>
+        <li><a href="customer.php" class="nav-link"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li><a href="C_market.php" class="nav-link"><i class="fas fa-store"></i> Market</a></li>
+        <li><a href="C_review.php" class="nav-link"><i class="fas fa-star"></i> Review</a></li>
+        <li><a href="C_top_selling_products.php" class="nav-link"><i class="fas fa-chart-line"></i> Top Selling</a></li>
+        <li><a href="C_order_history.php" class="nav-link"><i class="fas fa-history"></i> Order History</a></li>
+        <li><a href="C_purchase_history.php" class="nav-link"><i class="fas fa-shopping-cart"></i> Purchase History</a></li>
+        <li><a href="logout.php" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    </ul>
+</div>
 <header>
         <h1>Customer Dashboard - SmartAgri </h1>
         <a href="logout.php" class="button">Logout</a>

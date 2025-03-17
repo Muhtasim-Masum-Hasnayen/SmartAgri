@@ -24,6 +24,7 @@ $result = $stmt->get_result();
     </div>
 </header>
 <!-- Sidebar -->
+
 <div class="sidebar">
         <ul class="nav flex-column">
             <li class="nav-item">
@@ -37,6 +38,11 @@ $result = $stmt->get_result();
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" href="./performance.php">
+                    <i class="fas fa-chart-bar"></i>performence
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" href="manage_farmers.php">
                     <i class="fas fa-users"></i> Manage Farmers
                 </a>
@@ -46,24 +52,28 @@ $result = $stmt->get_result();
                                 <i class="fas fa-users"></i> Manage Suppliers
                             </a>
                         </li>
+
+
                         <li class="nav-item">
-                                                    <a class="nav-link" href="manage_products.php">
-                                                        <i class="fas fa-users"></i> Manage Products
-                                                    </a>
-                                                </li>
-            <li class="nav-item">
                 <a class="nav-link" href="manage_customers.php">
                     <i class="fas fa-user-friends"></i> Manage Customers
                 </a>
             </li>
-           
+                        <li class="nav-item">
+                              <a class="nav-link" href="manage_products.php">
+                                  <i class="fas fa-users"></i> Manage Products
+                                           </a>
+                                                </li>
+            
+
             <li class="nav-item">
-                <a class="nav-link" href="logout.php">
+                <a class="nav-link" href="../logout.php">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
             </li>
         </ul>
     </div>
+
 <div class="container">
     <h2>Suppliers List</h2>
 

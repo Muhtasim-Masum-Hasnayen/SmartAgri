@@ -414,11 +414,10 @@ table tbody td img {
 <body>
 
 
- <!-- Sidebar -->
- <div class="sidebar">
+<div class="sidebar">
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link" href="../admin/admin.php">
+                <a class="nav-link" href="admin.php">
                     <i class="fas fa-home"></i> Dashboard
                 </a>
             </li>
@@ -428,26 +427,34 @@ table tbody td img {
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="../admin/manage_farmers.php">
+                <a class="nav-link" href="./performance.php">
+                    <i class="fas fa-chart-bar"></i>performence
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="manage_farmers.php">
                     <i class="fas fa-users"></i> Manage Farmers
                 </a>
             </li>
             <li class="nav-item">
-                            <a class="nav-link" href="../admin/manage_suppliers.php">
+                            <a class="nav-link" href="manage_suppliers.php">
                                 <i class="fas fa-users"></i> Manage Suppliers
                             </a>
                         </li>
+
+
                         <li class="nav-item">
-                                                    <a class="nav-link" href="../admin/manage_products.php">
-                                                        <i class="fas fa-users"></i> Manage Products
-                                                    </a>
-                                                </li>
-            <li class="nav-item">
-                <a class="nav-link" href="../admin/manage_customers.php">
+                <a class="nav-link" href="manage_customers.php">
                     <i class="fas fa-user-friends"></i> Manage Customers
                 </a>
             </li>
+                        <li class="nav-item">
+                              <a class="nav-link" href="manage_products.php">
+                                  <i class="fas fa-users"></i> Manage Products
+                                           </a>
+                                                </li>
             
+
             <li class="nav-item">
                 <a class="nav-link" href="../logout.php">
                     <i class="fas fa-sign-out-alt"></i> Logout
@@ -455,6 +462,7 @@ table tbody td img {
             </li>
         </ul>
     </div>
+
 
 
     <header>

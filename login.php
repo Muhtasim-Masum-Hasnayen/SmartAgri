@@ -164,33 +164,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body>
 
 <div class="form-container">
-    <h2>User Login</h2>
+    <h2>ব্যবহারকারী লগইন</h2>
     <?php if (!empty($error)): ?>
         <div class="error"><?php echo $error; ?></div>
     <?php endif; ?>
     <form method="POST" action="login.php">
         <div class="form-group">
-            <label for="phone_number">Phone Number:</label>
+            <label for="phone_number">ফোন নম্বর:</label>
             <input type="text" name="phone_number" required>
         </div>
 
         <div class="form-group">
-            <label for="password">Password:</label>
+            <label for="password">পাসওয়ার্ড:</label>
             <input type="password" name="password" required>
         </div>
 
         <div class="form-group">
-            <input type="submit" value="Login">
+            <input type="submit" value="লগইন">
         </div>
     </form>
 
     <div class="register-link">
-        <p>Don't have an account? <a href="register.php">Register here</a></p>
+        <p>কোন অ্যাকাউন্ট নেই? <a href="register.php">এখানে নিবন্ধন করুন</a></p>
     </div>
 
     <!-- Back to Dashboard Link -->
     <div class="back-link">
-        <p><a href="dashboard.php">Back to Dashboard</a></p>
+        <p><a href="dashboard.php">ড্যাশবোর্ডে ফিরে যান</a></p>
     </div>
 </div>
 

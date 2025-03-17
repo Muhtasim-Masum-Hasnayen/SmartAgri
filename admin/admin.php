@@ -8,6 +8,18 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Admin') {
     exit();
 }
 
+// Initialize messages
+$error = '';
+$success_message = '';
+
+// Fetch all users
+$users_result = $conn->query("SELECT * FROM users");
+
+// Fetch all products
+$products_result = $conn->query("SELECT * FROM products");
+
+
+
 
 // Fetch the count of different user roles
 $query = "SELECT role, COUNT(*) as count FROM users GROUP BY role";
@@ -78,116 +90,10 @@ $products_result = $conn->query("SELECT * FROM products");
 
 
 
-// Handle Add Product
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_product'])) {
-    $product_name = htmlspecialchars($_POST['product_name']);
-    $quantity_type = htmlspecialchars($_POST['quantity_type']);
-    $image_path = ''; // Initialize as empty
-
-    // Handle image upload
-    if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
-        $image_tmp = $_FILES['product_image']['tmp_name'];
-        $image_name = basename($_FILES['product_image']['name']);
-        $image_path = 'uploads/' .$image_name;
-
-        // Ensure 'uploads/' directory exists
-        if (!is_dir('uploads')) {
-            mkdir('uploads', 0777, true);
-        }
-
-        if (move_uploaded_file($image_tmp, 'uploads/' . $image_name)) {
-            // Insert into database
-            $sql = "INSERT INTO products (name, image, quantity_type) VALUES (?, ?, ?)";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("sss", $product_name, $image_path, $quantity_type);
-            $stmt->execute();
-
-            // Redirect to refresh page
-            header('Location: admin.php');
-            exit();
-        } else {
-            $error = "Error uploading the image to the server.";
-        }
-    } else {
-        $error = "Please upload a valid image.";
-    }
-}
-
-// Handle Update Product
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_product'])) {
-    $product_name = htmlspecialchars($_POST['product_name']);
-    $quantity_type = htmlspecialchars($_POST['quantity_type']);
-    $image_path = $product_image; // Keep current image by default
-
-    // Handle new image upload
-    if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
-        $image_tmp = $_FILES['product_image']['tmp_name'];
-        $image_name = basename($_FILES['product_image']['name']);
-        $image_path = $image_name;
-
-        // Move uploaded image to 'uploads/' folder
-        if (move_uploaded_file($image_tmp, 'uploads/' . $image_path)) {
-            // Update product in database
-            $sql = "UPDATE products SET name = ?, image = ?, quantity_type = ? WHERE id = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("sssi", $product_name, $image_path, $quantity_type, $product_id);
-            $stmt->execute();
-
-            // Redirect to refresh page
-            header('Location: admin.php');
-            exit();
-        } else {
-            $error = "Error uploading image.";
-        }
-    } else {
-        // No image upload, just update name and quantity type
-        $sql = "UPDATE products SET name = ?, quantity_type = ? WHERE id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssi", $product_name, $quantity_type, $product_id);
-        $stmt->execute();
-
-        // Redirect to refresh page
-//             header('Location: admin.php');
-//             exit();
-    }
-}
-
-// Handle product deletion
-if (isset($_GET['delete_product']) && is_numeric($_GET['delete_product'])) {
-    $product_id = $_GET['delete_product'];
-
-    // Prepare the DELETE query
-    $sql = "DELETE FROM products WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $product_id);
-
-    // Execute the query
-    if ($stmt->execute()) {
-        // Redirect with success message
-        header('Location: admin.php?success=Product deleted successfully.');
-        exit();
-    } else {
-        // Redirect with error message
-        header('Location: admin.php?error=Failed to delete product.');
-        exit();
-    }
-}
-
-
-
-
-
-// Fetch product requests
-$query = "SELECT pr.id, pr.product_name, pr.product_image, pr.status,pr.quantity_type, f.name AS farmer_name
-          FROM product_requests pr
-          JOIN users f ON pr.farmer_id = f.user_id
-          WHERE pr.status = 'Pending'";
- $result = $conn->query($query);
 
 
 
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -518,56 +424,63 @@ form input[type="submit"]:hover {
 }
 
 
-
     </style>
 </head>
 <body>
 
-<header>
-    <h1>Admin Dashboard - SmartAgri</h1>
-    <a href="../logout.php" class="button">Logout</a>
-</header>
-<!-- Sidebar -->
-<div class="sidebar">
-    <ul class="nav flex-column">
-        <li class="nav-item">
-            <a class="nav-link" href="admin.php">
-                <i class="fas fa-home"></i> Dashboard
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="../analytics/analytics.php">
-                <i class="fas fa-chart-bar"></i> Analytics
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="manage_farmers.php">
-                <i class="fas fa-users"></i> Manage Farmers
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="manage_suppliers.php">
-                <i class="fas fa-users"></i> Manage Suppliers
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="manage_products.php">
-                <i class="fas fa-box"></i> Manage Products
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="manage_customers.php">
-                <i class="fas fa-user-friends"></i> Manage Customers
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="logout.php">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
-        </li>
-    </ul>
-</div>
 
+ <!-- Sidebar -->
+ <div class="sidebar">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="admin.php">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="../analytics/analytics.php">
+                    <i class="fas fa-chart-bar"></i> Analytics
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="./performance.php">
+                    <i class="fas fa-chart-bar"></i>performence
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="manage_farmers.php">
+                    <i class="fas fa-users"></i> Manage Farmers
+                </a>
+            </li>
+            <li class="nav-item">
+                            <a class="nav-link" href="manage_suppliers.php">
+                                <i class="fas fa-users"></i> Manage Suppliers
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                                                    <a class="nav-link" href="manage_products.php">
+                                                        <i class="fas fa-users"></i> Manage Products
+                                                    </a>
+                                                </li>
+            <li class="nav-item">
+                <a class="nav-link" href="manage_customers.php">
+                    <i class="fas fa-user-friends"></i> Manage Customers
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="../logout.php">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </li>
+        </ul>
+    </div>
+
+
+    <header>
+        <h1>Admin Dashboard - SmartAgri</h1>
+        <a href="../logout.php" class="button">Logout</a>
+    </header>
 
 
 <!-- User Role Distribution -->
@@ -705,6 +618,23 @@ form input[type="submit"]:hover {
         }
     });
 </script>
+
+
+
+
+
+
+    <div class="container">
+        <!-- Display Success/Error Messages -->
+        <?php if (isset($_GET['success'])): ?>
+            <p class="success"><?= htmlspecialchars($_GET['success']); ?></p>
+        <?php elseif (isset($_GET['error'])): ?>
+            <p class="error"><?= htmlspecialchars($_GET['error']); ?></p>
+        <?php endif; ?>
+
+
+
+
 
 </body>
 </html>

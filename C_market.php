@@ -118,114 +118,6 @@ try {
 
 
 
-    if (isset($_GET['product_id'])) {
-        $productId = $_GET['product_id'];
-       
-        // Fetch the product details from the database
-        $productStmt = $conn->prepare("SELECT fc.*, fc.farmer_id, fc.image as product_image FROM farmer_crops fc WHERE fc.product_id = ?");
-        $productStmt->bind_param("i", $productId);
-        $productStmt->execute();
-        $product = $productStmt->get_result()->fetch_assoc();
-    
-        if (isset($_GET['product_id'])) {
-            $productId = $_GET['product_id'];
-            $productStmt = $conn->prepare("SELECT fc.*, fc.farmer_id, fc.image as product_image FROM farmer_crops fc WHERE fc.product_id = ?");
-            $productStmt->bind_param("i", $productId);
-            $productStmt->execute();
-            $product = $productStmt->get_result()->fetch_assoc();
-        
-            if ($product) {
-                // Trigger modal display and populate product details
-                echo '
-                <script>
-                document.addEventListener("DOMContentLoaded", function() {
-                    console.log("Product details modal is triggered.");
-                    const modal = document.getElementById("productModal");
-                    const productDetails = document.getElementById("productDetails");
-                    
-                    if (modal && productDetails) {
-                        productDetails.innerHTML = `
-                            <h2>' . htmlspecialchars($product['name']) . '</h2>
-                            <img src="' . htmlspecialchars($product['product_image']) . '" alt="' . htmlspecialchars($product['name']) . '" style="max-width: 200px;">
-                            <p>Price: TK. ' . htmlspecialchars($product['price']) . '</p>
-                            <p>Available Quantity: ' . htmlspecialchars($product['quantity']) . ' ' . htmlspecialchars($product['quantity_type']) . '</p>
-                            <form id="addToCartForm" onsubmit="return handleAddToCart(event)">
-                                <input type="hidden" name="product_id" value="' . $product['product_id'] . '">
-                                <input type="hidden" name="farmer_id" value="' . $product['farmer_id'] . '">
-                                <div class="form-group">
-                                    <label>Quantity:</label>
-                                    <input type="number" name="quantity" min="1" value="1" required class="form-control">
-                                </div>
-                                <button type="submit" name="add_to_cart" class="btn-primary">Add to Cart</button>
-                            </form>
-                        `;
-                        
-                        modal.style.display = "block";
-                    } else {
-                        console.error("Modal elements not found");
-                    }
-                });
-        
-                // Add modal control functions
-                function closeModal() {
-                    const modal = document.getElementById("productModal");
-                    if (modal) {
-                        modal.style.display = "none";
-                    }
-                }
-        
-                // Close modal when clicking outside
-                window.onclick = function(event) {
-                    const modal = document.getElementById("productModal");
-                    if (event.target == modal) {
-                        modal.style.display = "none";
-                    }
-                }
-        
-                // Optional: Handle form submission with AJAX
-                function handleAddToCart(event) {
-                    event.preventDefault();
-                    const form = event.target;
-                    const formData = new FormData(form);
-        
-                    fetch("add_to_cart.php", {
-                        method: "POST",
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert("Product added to cart!");
-                            closeModal();
-                        } else {
-                            alert(data.message || "Error adding to cart");
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Error:", error);
-                        alert("Error adding to cart");
-                    });
-        
-                    return false;
-                }
-                </script>';
-            } else {
-                $_SESSION['error'] = "Product not found.";
-            }
-        }
-        
-    
-    }
-
-
-
-
-
-
-
-
-
-
   // Fetch available products - this should be at the start of your try block
   $productStmt = $conn->prepare("
   SELECT fc.*, fc.farmer_id,p.image as product_image
@@ -364,6 +256,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
         if ($stmt->execute()) {
             $_SESSION['message'] = "Product added to cart successfully!";
+            header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
         } else {
             $_SESSION['error'] = "Error adding product to cart.";
         }
@@ -372,7 +266,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
     // Fetch cart items
     $cartStmt = $conn->prepare("
-        SELECT c.*, fc.name, fc.price, fc.quantity_type, fc.image
+        SELECT c.*, fc.name, fc.price, fc.quantity_type, fc.image,fc.farmer_id
         FROM cart c
         JOIN farmer_crops fc ON c.product_id = fc.product_id AND c.farmer_id=fc.farmer_id
         WHERE c.user_id = ?
@@ -395,17 +289,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_quantity'])) {
     $productId = $_POST['product_id'];
     $userId = $_SESSION['user_id'];
+    $farmer_id= $_POST['farmer_id'];
     $action = $_POST['update_quantity'];
 
     if ($action === 'increase') {
-        $stmt = $conn->prepare("UPDATE cart SET quantity = quantity + 1 WHERE user_id = ? AND product_id = ?");
+        $stmt = $conn->prepare("UPDATE cart SET quantity = quantity + 1 WHERE user_id = ? AND product_id = ? AND farmer_id=?");
     } elseif ($action === 'decrease') {
-        $stmt = $conn->prepare("UPDATE cart SET quantity = GREATEST(quantity - 1, 1) WHERE user_id = ? AND product_id = ?");
+        $stmt = $conn->prepare("UPDATE cart SET quantity = quantity - 1 WHERE user_id = ? AND product_id = ? AND farmer_id=?");
     }
 
-    $stmt->bind_param("ii", $userId, $productId);
+    $stmt->bind_param("iii", $userId, $productId,$farmer_id);
     if ($stmt->execute()) {
         $_SESSION['message'] = "Cart updated successfully!";
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit();
     } else {
         $_SESSION['error'] = "Error updating cart.";
     }
@@ -514,42 +411,17 @@ if ($result->num_rows > 0) {
 
 
 <!-- Sidebar -->
- <div class="sidebar">
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link" href="customer.php">
-                    <i class="fas fa-home"></i> Dashboard
-                </a>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link" href="C_market.php">
-                    <i class="fas fa-users"></i> Market
-                </a>
-            </li>
-            <li class="nav-item">
-                            <a class="nav-link" href="C_top_selling_products.php">
-                                <i class="fas fa-chart-bar"></i> Top Selling Products
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                                                    <a class="nav-link" href="C_order_history.php">
-                                                        <i class="fas fa-history"></i> Order History
-                                                    </a>
-                                                </li>
-            <li class="nav-item">
-                <a class="nav-link" href="C_purchase_history.php">
-                    <i class="fas fa-history"></i> Purchase History
-                </a>
-            </li>
-           
-            <li class="nav-item">
-                <a class="nav-link" href="logout.php">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
-            </li>
-        </ul>
-    </div>
+<div class="sidebar">
+    <ul>
+        <li><a href="customer.php" class="nav-link"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li><a href="C_market.php" class="nav-link"><i class="fas fa-store"></i> Market</a></li>
+        <li><a href="C_review.php" class="nav-link"><i class="fas fa-star"></i> Review</a></li>
+        <li><a href="C_top_selling_products.php" class="nav-link"><i class="fas fa-chart-line"></i> Top Selling</a></li>
+        <li><a href="C_order_history.php" class="nav-link"><i class="fas fa-history"></i> Order History</a></li>
+        <li><a href="C_purchase_history.php" class="nav-link"><i class="fas fa-shopping-cart"></i> Purchase History</a></li>
+        <li><a href="logout.php" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    </ul>
+</div>
 <header>
         <h1>Customer Dashboard - SmartAgri </h1>
        
@@ -591,6 +463,7 @@ if ($result->num_rows > 0) {
         <div class="quantity-controls">
             <form method="POST" style="display: inline;">
                 <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
+                <input type="hidden" name="farmer_id" value="<?= $item['farmer_id'] ?>">
                 <input type="hidden" name="update_quantity" value="decrease">
                 <button type="submit" class="btn-decrement">-</button>
             </form>
@@ -598,6 +471,7 @@ if ($result->num_rows > 0) {
             <form method="POST" style="display: inline;">
                 <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
                 <input type="hidden" name="update_quantity" value="increase">
+                <input type="hidden" name="farmer_id" value="<?= $item['farmer_id'] ?>">
                 <button type="submit" class="btn-increment">+</button>
             </form>
         </div>

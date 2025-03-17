@@ -37,6 +37,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("ssssss", $name, $email, $phone_number, $hashed_password, $role, $start_date);
 
+
+
+
+
+
             if ($stmt->execute()) {
                 // Registration successful, set success message
                 $success_message = "Registration successful! You can now log in.";

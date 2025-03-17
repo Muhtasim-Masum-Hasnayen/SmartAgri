@@ -88,10 +88,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     <title>Crop Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-       body {
+        body {
             background: #f9f9f9;
             font-family: 'Roboto', sans-serif;
+            margin: 0;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #1f2937;
+            color: white;
+            height: 100vh;
+            padding: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        .sidebar h2 {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .sidebar a {
+            color: #b0bec5;
+            text-decoration: none;
+            padding: 10px 15px;
+            display: block;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-weight: 500;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .sidebar a:hover {
+            background-color: #4b5563;
+            color: white;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
         }
 
         .header {
@@ -107,13 +152,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
         .header h1 {
             font-size: 2.5rem;
             font-weight: bold;
-        }
-
-        .form-container {
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
 
         .btn-primary {
@@ -147,36 +185,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
             cursor: pointer;
         }
 
-        .badge-available {
-            background: #3b8d99;
-            color: white;
-            font-size: 0.9rem;
-        }
-
-        .badge-sold-out {
-            background: #d9534f;
-            color: white;
-            font-size: 0.9rem;
-        }
-
-        .modal-header {
-            background: linear-gradient(45deg, #3b8d99, #6b6b83);
-            color: white;
-        }
-
-        .modal-content {
-            border-radius: 10px;
-        }
-
-        .preview-image {
-            max-width: 200px;
-            max-height: 200px;
-            display: block;
-            margin: 20px auto;
-            border-radius: 10px;
-            border: 2px solid #ddd;
-        }
-
         .footer {
             margin-top: 20px;
             text-align: center;
@@ -184,19 +192,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
             color: #777;
         }
     </style>
+
 </head>
 <body>
 
+<div class="sidebar">
+        <h2>Navigation</h2>
+        <a href="crop_management.php"><i class="fas fa-seedling"></i> ফসল/পণ্য ব্যবস্থাপনা</a>
+        <a href="Buy.php"><i class="fas fa-shopping-cart"></i> সরবরাহকারীদের কাছ থেকে কিনুন</a>
+        <a href="addNewProduct.php"><i class="fas fa-plus-circle"></i> নতুন পণ্য যোগ করুন</a>
+        <a href="farmer/order_management.php"><i class="fas fa-clipboard-list"></i> অর্ডার ম্যানেজমেন্ট</a>
+        <a href="farmer/inventory_management.php"><i class="fas fa-boxes"></i>ইনভেন্টরি ম্যানেজমেন্ট</a>
+        <a href="farmer/financial_overview.php"><i class="fas fa-wallet"></i> আর্থিক সারসংক্ষেপ</a>
+        <a href="analytics_report.php"><i class="fas fa-chart-bar"></i> বিশ্লেষণ এবং প্রতিবেদন</a>
+        
+    </div>
+
+
+
 <div class="container py-4">
     <div class="header">
-        <h1><i class="fas fa-seedling"></i> Crop Management</h1>
-        <p>Manage your crops and inventory with ease</p>
+        <h1><i class="fas fa-seedling"></i> ফসল ব্যবস্থাপনা</h1>
+        <p>আপনার ফসল এবং মজুদ সহজেই পরিচালনা করুন</p>
     </div>
 
     <!-- Alert Messages -->
     <?php if (isset($_GET['success'])): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            Product added successfully!
+            পণ্যটি সফলভাবে যোগ করা হয়েছে!
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
@@ -221,7 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
                        placeholder="Search crops..." 
                        value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
                 <button class="btn btn-primary" type="submit">
-                    <i class="fas fa-search"></i> Search
+                    <i class="fas fa-search"></i> অনুসন্ধান করুন
                 </button>
             </div>
         </form>
@@ -301,7 +324,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
 
 
 <!-- Farmer's Added Crops Section -->
-<h3 class="mt-5">My Crop List</h3>
+<h3 class="mt-5">আমার ফসলের তালিকা</h3>
     <div class="table-responsive">
         <table class="table table-bordered">
             <thead class="table-dark">
@@ -317,12 +340,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
             <tbody>
                 <?php
                 // Fetch farmer's crops from farmers_crops table
-                $farmer_id = $_SESSION['user_id']; // Assuming you have farmer_id in session
-                $query = "SELECT fc.*,fc.id, fc.name,fc.image,fc.quantity,fc.quantity_type 
+                $farmer_id = $_SESSION['user_id']; 
+                $query = "SELECT fc.*,fc.product_id, fc.name,fc.image,fc.quantity,fc.quantity_type 
                          FROM farmer_crops fc 
                       
                          WHERE fc.farmer_id = ?
-                         ORDER BY fc.id DESC";
+                         ORDER BY fc.product_id DESC";
                 
                 $stmt = $conn->prepare($query);
                 $stmt->bind_param("i", $farmer_id);
@@ -333,7 +356,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
                     while ($row = $result->fetch_assoc()) {
                         ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($row['id']); ?></td>
+                            <td><?php echo htmlspecialchars($row['product_id']); ?></td>
                             <td><?php echo htmlspecialchars($row['name']); ?></td>
                            
                             <td><?php echo htmlspecialchars($row['quantity']) . ' ' . htmlspecialchars($row['quantity_type']); ?></td>
@@ -366,7 +389,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addProductModalLabel">Add Product</h5>
+                <h5 class="modal-title" id="addProductModalLabel">পণ্য যোগ করুন</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -377,62 +400,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
                     
                     <!-- Selected Crop Display -->
                     <div class="mb-3">
-                        <label class="form-label">Selected Crop:</label>
-                        <div class="form-control-plaintext" id="selected-crop">None</div>
+                        <label class="form-label">নির্বাচিত ফসল:</label>
+                        <div class="form-control-plaintext" id="selected-crop">কোনটিই নয়</div>
                     </div>
 
                     <!-- Name Field -->
                     <div class="mb-3">
-                        <label for="name" class="form-label">Product Name</label>
+                        <label for="name" class="form-label">পণ্যের নাম</label>
                         <input type="text" class="form-control" id="name" name="name" required>
                         <div class="invalid-feedback">
-                            Please provide a product name.
+                            দয়া করে একটি পণ্যের নাম দিন।
                         </div>
                     </div>
 
                     <!-- Description Field -->
                     <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
+                        <label for="description" class="form-label">বিবরণ</label>
                         <textarea class="form-control" id="description" name="description" required></textarea>
                         <div class="invalid-feedback">
-                            Please provide a description.
+                            দয়া করে একটি বিবরণ দিন।
                         </div>
                     </div>
 
                     <!-- Price Field -->
                     <div class="mb-3">
-                        <label for="price" class="form-label">Price</label>
+                        <label for="price" class="form-label">মূল্য</label>
                         <div class="input-group">
                             <input type="number" class="form-control" id="price" name="price" step="0.01" required min="0">
                             <span class="input-group-text quantity-type-label"></span>
                             <div class="invalid-feedback">
-                                Please provide a valid price.
+                                দয়া করে একটি বৈধ মূল্য প্রদান করুন।
                             </div>
                         </div>
                     </div>
 
                     <!-- Quantity Field -->
                     <div class="mb-3">
-                        <label for="quantity" class="form-label">Quantity</label>
+                        <label for="quantity" class="form-label">পরিমাণ</label>
                         <div class="input-group">
                             <input type="number" class="form-control" id="quantity" name="quantity" required min="1">
                             <span class="input-group-text quantity-type-label"></span>
                             <div class="invalid-feedback">
-                                Please provide a valid quantity.
+                                দয়া করে একটি বৈধ পরিমাণ প্রদান করুন।
                             </div>
                         </div>
                     </div>
 
                     <!-- Photo Field -->
                     <div class="mb-3">
-                        <label for="photo" class="form-label">Photo</label>
+                        <label for="photo" class="form-label">ছবি</label>
                         <input type="file" class="form-control" id="photo" name="photo">
                     </div>
 
                     <!-- Modal Footer -->
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Add Product</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">বন্ধ করা</button>
+                        <button type="submit" class="btn btn-primary">পণ্য যোগ করুন</button>
                     </div>
                 </form>
             </div>

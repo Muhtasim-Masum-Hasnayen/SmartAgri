@@ -135,22 +135,22 @@
 </head>
 <body>
     <header>
-        <h1>Agricultural Management System</h1>
+        <h1>কৃষি ব্যবস্থাপনা ব্যবস্থা</h1>
     </header>
     <nav>
-        <a href="dashboard.php">Home</a>
-        <a href="login.php">Login</a>
-        <a href="contact.php">Contact</a>
+        <a href="dashboard.php">হোম</a>
+        <a href="login.php">লগইন</a>
+        <a href="contact.php">যোগাযোগ</a>
     </nav>
 
     <div class="hero">
-        <h2>Innovative Solutions for Modern Farming</h2>
-        <p>Explore the latest trends and technologies shaping the future of agriculture.</p>
+        <h2>আধুনিক কৃষিকাজের জন্য উদ্ভাবনী সমাধান</h2>
+        <p>কৃষির ভবিষ্যৎ গঠনকারী সর্বশেষ প্রবণতা এবং প্রযুক্তিগুলি অন্বেষণ করুন।</p>
     </div>
 
     <div class="container">
-        <h2>Explore Agricultural Topics Through Videos</h2>
-        <p>Learn more about sustainable practices and modern farming techniques with these curated videos.</p>
+        <h2>ভিডিওর মাধ্যমে কৃষি বিষয়গুলি অন্বেষণ করুন</h2>
+        <p>এই কিউরেটেড ভিডিওগুলির মাধ্যমে টেকসই পদ্ধতি এবং আধুনিক কৃষি কৌশল সম্পর্কে আরও জানুন।</p>
 
         <div class="video-container">
             <!-- Video Cards -->
@@ -184,8 +184,8 @@
     </div>
 
     <footer>
-        <p>&copy; 2025 Agricultural Management System. All rights reserved.</p>
-        <p><a href="privacy-policy.html">Privacy Policy</a> | <a href="terms-of-service.html">Terms of Service</a></p>
+        <p>&copy; ২০২৫ কৃষি ব্যবস্থাপনা ব্যবস্থা। সর্বস্বত্ব সংরক্ষিত।</p>
+        <p><a href="privacy-policy.html">গোপনীয়তা নীতি</a> | <a href="terms-of-service.html">পরিষেবার শর্তাবলী</a></p>
     </footer>
 </body>
 </html>
