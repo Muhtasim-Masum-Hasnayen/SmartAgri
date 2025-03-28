@@ -418,46 +418,46 @@ table tbody td img {
         <ul class="nav flex-column">
             <li class="nav-item">
                 <a class="nav-link" href="admin.php">
-                    <i class="fas fa-home"></i> Dashboard
+                    <i class="fas fa-home"></i> ড্যাশবোর্ড
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="../analytics/analytics.php">
-                    <i class="fas fa-chart-bar"></i> Analytics
+                    <i class="fas fa-chart-bar"></i> বিশ্লেষণ
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="./performance.php">
-                    <i class="fas fa-chart-bar"></i>performence
+                    <i class="fas fa-chart-bar"></i>কর্মক্ষমতা
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="manage_farmers.php">
-                    <i class="fas fa-users"></i> Manage Farmers
+                    <i class="fas fa-users"></i> কৃষকদের পরিচালনা করুন
                 </a>
             </li>
             <li class="nav-item">
                             <a class="nav-link" href="manage_suppliers.php">
-                                <i class="fas fa-users"></i> Manage Suppliers
+                                <i class="fas fa-users"></i> সরবরাহকারীদের পরিচালনা করুন
                             </a>
                         </li>
 
 
                         <li class="nav-item">
                 <a class="nav-link" href="manage_customers.php">
-                    <i class="fas fa-user-friends"></i> Manage Customers
+                    <i class="fas fa-user-friends"></i> ্রাহকদের পরিচালনা করুন
                 </a>
             </li>
                         <li class="nav-item">
                               <a class="nav-link" href="manage_products.php">
-                                  <i class="fas fa-users"></i> Manage Products
+                                  <i class="fas fa-users"></i> পণ্য পরিচালনা করুন
                                            </a>
                                                 </li>
             
 
             <li class="nav-item">
                 <a class="nav-link" href="../logout.php">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+                    <i class="fas fa-sign-out-alt"></i> লগআউট
                 </a>
             </li>
         </ul>
@@ -466,8 +466,8 @@ table tbody td img {
 
 
     <header>
-        <h1>Manage Products - SmartAgri</h1>
-        <a href="../logout.php" class="button">Logout</a>
+        <h1>পণ্য পরিচালনা করুন - স্মার্টকৃষি</h1>
+        <a href="../logout.php" class="button">লগআউট</a>
     </header>
 
 
@@ -488,17 +488,17 @@ table tbody td img {
 
 
 
-<h2 class="mt-4">Product Requests</h2>
+<h2  style="text-align: center;" class="mt-4">পণ্যের অনুরোধ</h2>
 <table class="table table-bordered">
     <thead>
         <tr>
-            <th>#</th>
-            <th>Product Name</th>
-            <th>Image</th>
-            <th>Farmer Name</th>
-            <th>Quantity Type</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th style="text-align: center;">#</th>
+            <th style="text-align: center;">পণ্যের নাম</th>
+            <th style="text-align: center;">ছবি</th>
+            <th style="text-align: center;">কৃষকের নাম</th>
+            <th style="text-align: center;">পরিমাণের ধরণ</th>
+            <th style="text-align: center;">অবস্থা</th>
+            <th style="text-align: center;">ক্রিয়া</th>
         </tr>
     </thead>
     <tbody>
@@ -534,15 +534,15 @@ table tbody td img {
 
 <!-- Top Selling Products Section -->
 <div class="section">
-    <h2>Top Selling Products</h2>
+    <h2 style="text-align: center;">সর্বাধিক বিক্রিত পণ্য</h2>
     <table>
         <thead>
             <tr>
-                <th>Product ID</th>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Quantity Type</th>
-                <th>Orders Sold</th>
+                <th style="text-align: center;">পণ্য আইডি</th>
+                <th style="text-align: center;">ছবি</th>
+                <th style="text-align: center;">নাম</th>
+                <th style="text-align: center;">পরিমাণের ধরণ</th>
+                <th style="text-align: center;">বিক্রি হওয়া অর্ডার</th>
             </tr>
         </thead>
         <tbody>
@@ -572,15 +572,16 @@ table tbody td img {
 
 <!-- Manage Products -->
 <div class="section">
-    <h2>Manage Products</h2>
+    <h2>পণ্য পরিচালনা করুন</h2>
     <table>
         <thead>
             <tr>
-                <th>Product ID</th>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Quantity Type</th>
-                <th>Actions</th>
+                <th style="text-align: center;">পণ্য আইডি</th>
+                <th style="text-align: center;">ছবি</th>
+                <th style="text-align: center;">নাম</th>
+                <th style="text-align: center;">পরিমাণের ধরণ</th>
+
+                <th style="text-align: center;">কর্ম</th>
             </tr>
         </thead>
         <tbody>

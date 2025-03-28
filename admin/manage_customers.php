@@ -19,57 +19,58 @@ $result = $stmt->get_result();
 <body>
 <header>
     <div class="admin-header">
-        <h1>Admin Panel</h1>
+        <h1>অ্যাডমিন প্যানেল</h1>
     </div>
 </header>
 <div class="sidebar">
         <ul class="nav flex-column">
             <li class="nav-item">
                 <a class="nav-link" href="admin.php">
-                    <i class="fas fa-home"></i> Dashboard
+                    <i class="fas fa-home"></i> ড্যাশবোর্ড
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="../analytics/analytics.php">
-                    <i class="fas fa-chart-bar"></i> Analytics
+                    <i class="fas fa-chart-bar"></i> বিশ্লেষণ
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="./performance.php">
-                    <i class="fas fa-chart-bar"></i>performence
+                    <i class="fas fa-chart-bar"></i>কর্মক্ষমতা
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="manage_farmers.php">
-                    <i class="fas fa-users"></i> Manage Farmers
+                    <i class="fas fa-users"></i> কৃষকদের পরিচালনা করুন
                 </a>
             </li>
             <li class="nav-item">
                             <a class="nav-link" href="manage_suppliers.php">
-                                <i class="fas fa-users"></i> Manage Suppliers
+                                <i class="fas fa-users"></i> সরবরাহকারীদের পরিচালনা করুন
                             </a>
                         </li>
                         <li class="nav-item">
                                                     <a class="nav-link" href="manage_products.php">
-                                                        <i class="fas fa-users"></i> Manage Products
+                                                        <i class="fas fa-users"></i> পণ্য পরিচালনা করুন
                                                     </a>
                                                 </li>
             <li class="nav-item">
                 <a class="nav-link" href="manage_customers.php">
-                    <i class="fas fa-user-friends"></i> Manage Customers
+                    <i class="fas fa-user-friends"></i>  গ্রাহকদের পরিচালনা করুন
                 </a>
             </li>
 
             <li class="nav-item">
                 <a class="nav-link" href="../logout.php">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+                    <i class="fas fa-sign-out-alt"></i> লগআউট
                 </a>
             </li>
         </ul>
     </div>
 
 <div class="container">
-    <h2>Customers List</h2>
+    <h2 style="text-align: center;">গ্রাহক তালিকা
+    </h2>
 
     <!-- Display Success or Error Messages -->
     <?php if (!empty($_SESSION['success'])): ?>
@@ -86,11 +87,11 @@ $result = $stmt->get_result();
     <table class="data-table">
         <thead>
             <tr>
-                <th>Customer ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Actions</th>
+                <th style="text-align: center;">গ্রাহক আইডি</th>
+                <th style="text-align: center;">নাম</th>
+                <th style="text-align: center;">ইমেইল</th>
+                <th style="text-align: center;">ফোন</th>
+                <th style="text-align: center;">মুছে ফেলুন</th>
             </tr>
         </thead>
         <tbody>

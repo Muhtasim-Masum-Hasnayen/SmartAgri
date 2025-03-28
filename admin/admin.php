@@ -434,43 +434,43 @@ form input[type="submit"]:hover {
         <ul class="nav flex-column">
             <li class="nav-item">
                 <a class="nav-link" href="admin.php">
-                    <i class="fas fa-home"></i> Dashboard
+                    <i class="fas fa-home"></i> অ্যাডমিন ড্যাশবোর্ড
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="../analytics/analytics.php">
-                    <i class="fas fa-chart-bar"></i> Analytics
+                    <i class="fas fa-chart-bar"></i> বিশ্লেষণ
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="./performance.php">
-                    <i class="fas fa-chart-bar"></i>performence
+                    <i class="fas fa-chart-bar"></i>কর্মক্ষমতা
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="manage_farmers.php">
-                    <i class="fas fa-users"></i> Manage Farmers
+                    <i class="fas fa-users"></i> কৃষকদের পরিচালনা করুন
                 </a>
             </li>
             <li class="nav-item">
                             <a class="nav-link" href="manage_suppliers.php">
-                                <i class="fas fa-users"></i> Manage Suppliers
+                                <i class="fas fa-users"></i> সরবরাহকারীদের পরিচালনা করুন
                             </a>
                         </li>
                         <li class="nav-item">
                                                     <a class="nav-link" href="manage_products.php">
-                                                        <i class="fas fa-users"></i> Manage Products
+                                                        <i class="fas fa-users"></i> পণ্য পরিচালনা করুন
                                                     </a>
                                                 </li>
             <li class="nav-item">
                 <a class="nav-link" href="manage_customers.php">
-                    <i class="fas fa-user-friends"></i> Manage Customers
+                    <i class="fas fa-user-friends"></i> গ্রাহকদের পরিচালনা করুন
                 </a>
             </li>
 
             <li class="nav-item">
                 <a class="nav-link" href="../logout.php">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+                    <i class="fas fa-sign-out-alt"></i> লগআউট
                 </a>
             </li>
         </ul>
@@ -478,14 +478,14 @@ form input[type="submit"]:hover {
 
 
     <header>
-        <h1>Admin Dashboard - SmartAgri</h1>
-        <a href="../logout.php" class="button">Logout</a>
+        <h1>অ্যাডমিন ড্যাশবোর্ড - স্মার্ট কৃষি</h1>
+        <a href="../logout.php" class="button">লগআউট</a>
     </header>
 
 
 <!-- User Role Distribution -->
 <div class="container">
-    <h2 class="text-center">User Distribution</h2>
+    <h2 class="text-center">ব্যবহারকারীর সংখ্যা</h2>
     <canvas id="userChart"></canvas>
 </div>
 
@@ -541,7 +541,7 @@ form input[type="submit"]:hover {
 
 <!-- Order Completion Rate -->
 <div style="max-width: 80%; margin: 0 auto; padding: 20px;">
-    <h2 class="text-center">Order Completion Rate</h2>
+    <h2 class="text-center">অর্ডার সম্পূর্ণ হওয়ার হার</h2>
     <canvas id="orderCompletionChart"></canvas>
 </div>
 
@@ -561,32 +561,32 @@ form input[type="submit"]:hover {
             labels: dates, // X-axis: Dates
             datasets: [
                 {
-                    label: 'Completed',
+                    label: 'সম্পন্ন',
                     data: completed, // Data for completed orders
                     backgroundColor: '#C5E1A5', // Green for completed
                 },
                 {
-                    label: 'Pending',
+                    label: 'প্রতীক্ষমাণ',
                     data: pending, // Data for pending orders
                     backgroundColor: '#ffc107', // Yellow for pending
                 },
                 {
-                    label: 'Processing',
+                    label: 'প্রক্রিয়াকরণ',
                     data: processing, // Data for processing orders
                     backgroundColor: '#17a2b8', // Blue for processing
                 },
                 {
-                    label: 'Shipped',
+                    label: 'পাঠানো হয়েছে',
                     data: shipped, // Data for shipped orders
                     backgroundColor: '#0D47A1', // Light Blue for shipped
                 },
                 {
-                    label: 'Delivered',
+                    label: 'বিতরণ করা হয়েছে',
                     data: delivered, // Data for delivered orders
                     backgroundColor: '#28a745', // Dark Green for delivered
                 },
                 {
-                    label: 'Cancelled',
+                    label: 'বাতিল করা হয়েছে',
                     data: cancelled, // Data for canceled orders
                     backgroundColor: '#C62828', // Red for canceled
                 }

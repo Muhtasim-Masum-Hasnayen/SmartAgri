@@ -344,43 +344,43 @@ form input[type="submit"]:hover {
         <ul class="nav flex-column">
             <li class="nav-item">
                 <a class="nav-link" href="admin.php">
-                    <i class="fas fa-home"></i> Dashboard
+                    <i class="fas fa-home"></i> অ্যাডমিন ড্যাশবোর্ড
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="../analytics/analytics.php">
-                    <i class="fas fa-chart-bar"></i> Analytics
+                    <i class="fas fa-chart-bar"></i> বিশ্লেষণ
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="./customers_performance.php">
-                    <i class="fas fa-chart-bar"></i>Customers
+                    <i class="fas fa-chart-bar"></i>গ্রাহক
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="manage_farmers.php">
-                    <i class="fas fa-users"></i> Farmers
+                    <i class="fas fa-users"></i> কৃষকদের পরিচালনা করুন
                 </a>
             </li>
             <li class="nav-item">
                             <a class="nav-link" href="manage_suppliers.php">
-                                <i class="fas fa-users"></i> Manage Suppliers
+                                <i class="fas fa-users"></i> সরবরাহকারীদের পরিচালনা করুন
                             </a>
                         </li>
                         <li class="nav-item">
                                                     <a class="nav-link" href="manage_products.php">
-                                                        <i class="fas fa-users"></i> Manage Products
+                                                        <i class="fas fa-users"></i> পণ্য পরিচালনা করুন
                                                     </a>
                                                 </li>
             <li class="nav-item">
                 <a class="nav-link" href="manage_customers.php">
-                    <i class="fas fa-user-friends"></i> Manage Customers
+                    <i class="fas fa-user-friends"></i> গ্রাহকদের পরিচালনা করুন
                 </a>
             </li>
             
             <li class="nav-item">
                 <a class="nav-link" href="../logout.php">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+                    <i class="fas fa-sign-out-alt"></i> লগআউট
                 </a>
             </li>
         </ul>
@@ -388,8 +388,8 @@ form input[type="submit"]:hover {
 
 
     <header>
-        <h1>Admin Dashboard - SmartAgri</h1>
-        <a href="logout.php" class="button">Logout</a>
+        <h1>অ্যাডমিন ড্যাশবোর্ড - স্মার্ট কৃষি</h1>
+        <a href="logout.php" class="button">লগআউট</a>
     </header>
 
 
@@ -398,15 +398,15 @@ form input[type="submit"]:hover {
             <table>
                 <thead>
                     <tr>
-                        <th>Customer ID</th>
-                        <th>Customer Name</th>
-                        <th>Email</th>
-                        <th>Total Orders</th>
-                        <th>Total Spent (TK)</th>
-                        <th>Purchased Products</th>
+                        <th>গ্রাহক আইডি</th>
+                        <th>গ্রাহক নাম</th>
+                        <th>ইমেইল</th>
+                        <th>মোট অর্ডার</th>
+                        <th>মোট ব্যয় (টাকা) </th>
+                        <th>ক্রয়কৃত পণ্য</th>
                       
-                        <th>Total Reviews</th>
-                        <th>Average Rating</th>
+                        <th>মোট পর্যালোচনা</th>
+                        <th>গড় রেটিং</th>
                        
                     </tr>
                 </thead>
@@ -435,15 +435,15 @@ form input[type="submit"]:hover {
             <table>
                 <thead>
                     <tr>
-                        <th>Farmer ID</th>
-                        <th>Farm Name</th>
-                        <th>Email</th>
-                        <th>Total Orders</th>
-                        <th>Total Sales (TK)</th>
-                        <th>Average Rating</th>
-                        <th>Unique Products Sold</th>
-                        <th>Timely Order Rate (%)</th>
-                        <th>Cancellation Rate (%)</th>
+                        <th>কৃষক আইডি</th>
+                        <th>খামারের নাম</th>
+                        <th>ইমেইল</th>
+                        <th>মোট অর্ডার</th>
+                        <th>মোট বিক্রয় (টাকা)</th>
+                        <th>গড় রেটিং</th>
+                        <th>অনন্য পণ্য বিক্রির সংখ্যা</th>
+                        <th>সময়মত অর্ডার হার (%)</th>
+                        <th>বাতিলকরণের হার (%)</th>
                     </tr>
                 </thead>
                 <tbody>
